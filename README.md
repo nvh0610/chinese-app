@@ -25,15 +25,6 @@ http://localhost:5000
 
 ---
 
-## Tài khoản mặc định
-
-| Tài khoản | Mật khẩu | Vai trò |
-|-----------|----------|---------|
-| admin     | 123456   | Admin (thêm/sửa/xóa) |
-| user      | 123456   | User (chỉ xem/làm bài) |
-
----
-
 ## Tính năng
 
 ### 📝 Trắc nghiệm từ vựng
