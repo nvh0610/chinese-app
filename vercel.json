@@ -2,14 +2,14 @@
     "version": 2,
     "builds": [
         {
-            "src": "chinese-app/app.py",
+            "src": "app.py",
             "use": "@vercel/python"
         }
     ],
     "routes": [
         {
             "src": "/(.*)",
-            "destination": "chinese-app/app.py"
+            "dest": "app.py"
         }
     ]
 }
