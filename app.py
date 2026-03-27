@@ -7,8 +7,8 @@ import random
 app = Flask(__name__)
 app.secret_key = 'chinese_secret_2024_xyz'
 
-with app.app_context():
-    init_db()
+# with app.app_context():
+#     init_db()
 
 # ── Decorators ────────────────────────────────────────────────────────────────
 
