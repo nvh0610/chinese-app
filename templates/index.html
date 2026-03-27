@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>汉语学习 · Học Tiếng Trung</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+
+  <!-- ══ LOGIN GATE ══════════════════════════════════════════════════════════ -->
+  <div id="loginGate" class="gate">
+    <div class="gate-bg">
+      <div class="gate-orb orb1"></div>
+      <div class="gate-orb orb2"></div>
+      <div class="gate-orb orb3"></div>
+    </div>
+    <div class="gate-card">
+      <div class="gate-logo">
+        <span class="gate-zh">汉语</span>
+        <span class="gate-sub">学习平台</span>
+      </div>
+      <h1 class="gate-title">Học Tiếng Trung</h1>
+      <p class="gate-desc">Đăng nhập để bắt đầu hành trình học tập</p>
+      <div class="form-group">
+        <label>Tên đăng nhập</label>
+        <input type="text" id="gateUser" placeholder="username" autocomplete="username" />
+      </div>
+      <div class="form-group">
+        <label>Mật khẩu</label>
+        <div class="pw-wrap">
+          <input type="password" id="gatePw" placeholder="••••••" autocomplete="current-password" />
+          <button class="pw-eye" onclick="togglePw('gatePw',this)" tabindex="-1">👁</button>
+        </div>
+      </div>
+      <div id="gateError" class="error-msg hidden"></div>
+      <button class="btn-primary full-width" onclick="doLogin()">Đăng nhập →</button>
+      <!-- <p class="gate-hint">admin / 123456 &nbsp;·&nbsp; user / 123456</p> -->
+    </div>
+  </div>
+
+  <!-- ══ APP ═════════════════════════════════════════════════════════════════ -->
+  <div id="appShell" class="hidden">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-inner">
+        <div class="logo">
+          <span class="logo-zh">汉</span>
+          <div class="logo-text">
+            <span class="logo-main">汉语学习</span>
+            <span class="logo-sub">Học Tiếng Trung</span>
+          </div>
+        </div>
+        <nav class="nav" id="mainNav">
+          <button class="nav-btn active" data-page="quiz-vocab" onclick="switchPage('quiz-vocab',this)">📝 Trắc
+            nghiệm</button>
+          <button class="nav-btn" data-page="quiz-type" onclick="switchPage('quiz-type',this)">✍️ Tự điền</button>
+          <button class="nav-btn" data-page="quiz-sent" onclick="switchPage('quiz-sent',this)">🔀 Sắp xếp câu</button>
+          <button class="nav-btn" data-page="manage" onclick="switchPage('manage',this)">📚 Kho từ</button>
+          <button class="nav-btn admin-only hidden" data-page="admin" onclick="switchPage('admin',this)">⚙️ Quản
+            lý</button>
+        </nav>
+        <div class="header-right">
+          <span class="user-chip" id="userChip"></span>
+          <button class="btn-logout" onclick="doLogout()">↩ Thoát</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+
+      <!-- ══ PAGE: TRẮC NGHIỆM ══════════════════════════════════════════════════ -->
+      <div id="page-quiz-vocab" class="page active">
+        <div class="page-header">
+          <h1>📝 Trắc nghiệm từ vựng</h1>
+          <p>Chọn chữ Hán đúng với nghĩa tiếng Việt</p>
+        </div>
+        <div class="quiz-bar">
+          <select class="sel" id="vqTopic" onchange="resetVQ()">
+            <option value="">Tất cả chủ đề</option>
+          </select>
+          <button class="chip-btn" onclick="resetVQ()">🔄 Reset</button>
+          <div class="score-chips">
+            <span class="chip green">✓ <strong id="vqRight">0</strong></span>
+            <span class="chip red">✗ <strong id="vqWrong">0</strong></span>
+            <span class="chip gray">Câu <strong id="vqDone">0</strong>/<strong id="vqTotal">?</strong></span>
+          </div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-fill" id="vqProgress"></div>
+        </div>
+        <div class="qcard" id="vqCard">
+          <div class="qload">Đang tải...</div>
+        </div>
+      </div>
+
+      <!-- ══ PAGE: TỰ ĐIỀN CHỮ HÁN ════════════════════════════════════════════ -->
+      <div id="page-quiz-type" class="page">
+        <div class="page-header">
+          <h1>✍️ Tự điền chữ Hán</h1>
+          <p>Nhìn nghĩa tiếng Việt, tự nhập chữ Hán</p>
+        </div>
+        <div class="quiz-bar">
+          <select class="sel" id="tqTopic" onchange="resetTQ()">
+            <option value="">Tất cả chủ đề</option>
+          </select>
+          <button class="chip-btn" onclick="resetTQ()">🔄 Reset</button>
+          <div class="score-chips">
+            <span class="chip green">✓ <strong id="tqRight">0</strong></span>
+            <span class="chip red">✗ <strong id="tqWrong">0</strong></span>
+            <span class="chip gray">Câu <strong id="tqDone">0</strong>/<strong id="tqTotal">?</strong></span>
+          </div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-fill" id="tqProgress"></div>
+        </div>
+        <div class="qcard" id="tqCard">
+          <div class="qload">Đang tải...</div>
+        </div>
+      </div>
+
+      <!-- ══ PAGE: SẮP XẾP CÂU ════════════════════════════════════════════════ -->
+      <div id="page-quiz-sent" class="page">
+        <div class="page-header">
+          <h1>🔀 Sắp xếp câu</h1>
+          <p>Nhấn chọn từng chữ để ghép thành câu đúng</p>
+        </div>
+        <div class="quiz-bar">
+          <select class="sel" id="sqTopic" onchange="resetSQ()">
+            <option value="">Tất cả chủ đề</option>
+          </select>
+          <button class="chip-btn" onclick="resetSQ()">🔄 Reset</button>
+          <div class="score-chips">
+            <span class="chip green">✓ <strong id="sqRight">0</strong></span>
+            <span class="chip red">✗ <strong id="sqWrong">0</strong></span>
+            <span class="chip gray">Câu <strong id="sqDone">0</strong>/<strong id="sqTotal">?</strong></span>
+          </div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-fill" id="sqProgress"></div>
+        </div>
+        <div class="qcard" id="sqCard">
+          <div class="qload">Đang tải...</div>
+        </div>
+      </div>
+
+      <!-- ══ PAGE: KHO TỪ ══════════════════════════════════════════════════════ -->
+      <div id="page-manage" class="page">
+        <div class="page-header">
+          <h1>📚 Kho từ vựng</h1>
+          <p id="manageDesc">Xem và quản lý từ vựng của bạn</p>
+        </div>
+        <div class="tabs">
+          <button class="tab active" onclick="switchTab('tv',this)">📖 Từ vựng</button>
+          <button class="tab" onclick="switchTab('ts',this)">✍️ Câu luyện</button>
+          <button class="tab" onclick="switchTab('tt',this)">🏷️ Chủ đề</button>
+        </div>
+
+        <div id="tab-tv" class="tab-pane active">
+          <div class="tb-bar">
+            <select class="sel" id="mvTopic" onchange="loadVList()">
+              <option value="">Tất cả chủ đề</option>
+            </select>
+            <select class="sel" id="mvScope" onchange="loadVList()">
+              <option value="">Tất cả</option>
+              <option value="public">Công khai</option>
+              <option value="private">Của tôi</option>
+            </select>
+            <button class="btn-primary" onclick="openVModal()">+ Thêm từ</button>
+          </div>
+          <div id="vList"></div>
+        </div>
+
+        <div id="tab-ts" class="tab-pane">
+          <div class="tb-bar">
+            <select class="sel" id="msTopic" onchange="loadSList()">
+              <option value="">Tất cả chủ đề</option>
+            </select>
+            <button class="btn-primary" onclick="openSModal()">+ Thêm câu</button>
+          </div>
+          <div id="sList"></div>
+        </div>
+
+        <div id="tab-tt" class="tab-pane">
+          <div class="tb-bar">
+            <button class="btn-primary" onclick="openTModal()">+ Thêm chủ đề</button>
+          </div>
+          <div id="tList"></div>
+        </div>
+      </div>
+
+      <!-- ══ PAGE: QUẢN LÝ (ADMIN) ════════════════════════════════════════════ -->
+      <div id="page-admin" class="page">
+        <div class="page-header">
+          <h1>⚙️ Quản lý người dùng</h1>
+          <p>Tạo, xóa, đổi mật khẩu tài khoản</p>
+        </div>
+        <div class="tb-bar">
+          <button class="btn-primary" onclick="openUserModal()">+ Tạo tài khoản</button>
+        </div>
+        <div id="userList"></div>
+      </div>
+
+    </main>
+  </div><!-- /appShell -->
+
+  <!-- ══ MODALS ════════════════════════════════════════════════════════════ -->
+
+  <!-- Vocab modal -->
+  <div id="mVocab" class="modal hidden">
+    <div class="mbox">
+      <div class="mhead">
+        <h3 id="mVocabTitle">Thêm từ vựng</h3><button onclick="closeM('mVocab')">✕</button>
+      </div>
+      <input type="hidden" id="mvId" />
+      <div class="frow">
+        <div class="fg"><label>Chủ đề *</label><select id="mvTSel" class="sel w100"></select></div>
+        <div class="fg"><label>Chữ Hán *</label><input type="text" id="mvHz" class="hz" placeholder="你好" /></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Pinyin *</label><input type="text" id="mvPy" placeholder="nǐ hǎo" /></div>
+        <div class="fg"><label>Tiếng Việt *</label><input type="text" id="mvVn" placeholder="Xin chào" /></div>
+      </div>
+      <div class="msep">Câu ví dụ <span class="opt">(không bắt buộc)</span></div>
+      <div class="fg"><label>Chữ Hán</label><input type="text" id="mvEhz" class="hz" placeholder="你好，我叫小明。" /></div>
+      <div class="fg"><label>Pinyin</label><input type="text" id="mvEpy" placeholder="Nǐ hǎo..." /></div>
+      <div class="fg"><label>Tiếng Việt</label><input type="text" id="mvEvn" placeholder="Xin chào..." /></div>
+      <div id="mVocabErr" class="error-msg hidden"></div>
+      <div class="mfooter"><button class="btn-ghost" onclick="closeM('mVocab')">Hủy</button><button class="btn-primary"
+          onclick="saveVocab()">Lưu</button></div>
+    </div>
+  </div>
+
+  <!-- Sentence modal -->
+  <div id="mSent" class="modal hidden">
+    <div class="mbox">
+      <div class="mhead">
+        <h3>Thêm câu luyện tập</h3><button onclick="closeM('mSent')">✕</button>
+      </div>
+      <div class="fg"><label>Chủ đề *</label><select id="msTSel" class="sel w100"></select></div>
+      <div class="fg"><label>Câu chữ Hán *</label><input type="text" id="msHz" class="hz" placeholder="我很高兴认识你" /></div>
+      <div class="fg"><label>Pinyin</label><input type="text" id="msPy" placeholder="Wǒ hěn gāoxìng rènshi nǐ" /></div>
+      <div class="fg"><label>Nghĩa tiếng Việt *</label><input type="text" id="msVn"
+          placeholder="Tôi rất vui được gặp bạn" /></div>
+      <div id="mSentErr" class="error-msg hidden"></div>
+      <div class="mfooter"><button class="btn-ghost" onclick="closeM('mSent')">Hủy</button><button class="btn-primary"
+          onclick="saveSent()">Lưu</button></div>
+    </div>
+  </div>
+
+  <!-- Topic modal -->
+  <div id="mTopic" class="modal hidden">
+    <div class="mbox small">
+      <div class="mhead">
+        <h3 id="mTopicTitle">Thêm chủ đề</h3><button onclick="closeM('mTopic')">✕</button>
+      </div>
+      <input type="hidden" id="mtId" />
+      <div class="fg"><label>Tên chủ đề *</label><input type="text" id="mtName" placeholder="Ví dụ: Cảm xúc" /></div>
+      <div class="fg"><label>Mô tả</label><input type="text" id="mtDesc" placeholder="Mô tả ngắn" /></div>
+      <div id="mTopicErr" class="error-msg hidden"></div>
+      <div class="mfooter"><button class="btn-ghost" onclick="closeM('mTopic')">Hủy</button><button class="btn-primary"
+          onclick="saveTopic()">Lưu</button></div>
+    </div>
+  </div>
+
+  <!-- User modal -->
+  <div id="mUser" class="modal hidden">
+    <div class="mbox small">
+      <div class="mhead">
+        <h3 id="mUserTitle">Tạo tài khoản</h3><button onclick="closeM('mUser')">✕</button>
+      </div>
+      <input type="hidden" id="muId" />
+      <div class="fg"><label>Tên đăng nhập *</label><input type="text" id="muName" placeholder="username" id="muName" />
+      </div>
+      <div class="fg">
+        <label>Mật khẩu <span id="muPwHint" class="opt">(để trống = giữ nguyên)</span></label>
+        <div class="pw-wrap"><input type="password" id="muPw" placeholder="••••••" /><button class="pw-eye"
+            onclick="togglePw('muPw',this)" tabindex="-1">👁</button></div>
+      </div>
+      <div class="fg"><label>Vai trò</label>
+        <select id="muRole" class="sel w100">
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div id="mUserErr" class="error-msg hidden"></div>
+      <div class="mfooter"><button class="btn-ghost" onclick="closeM('mUser')">Hủy</button><button class="btn-primary"
+          onclick="saveUser()">Lưu</button></div>
+    </div>
+  </div>
+
+  <!-- Confirm modal -->
+  <div id="mConfirm" class="modal hidden">
+    <div class="mbox small center">
+      <div class="confirm-icon">🗑️</div>
+      <h3>Xác nhận xóa</h3>
+      <p id="mConfirmMsg"></p>
+      <div class="mfooter center"><button class="btn-ghost" onclick="closeM('mConfirm')">Hủy</button><button
+          class="btn-danger" onclick="runDelete()">Xóa</button></div>
+    </div>
+  </div>
+
+  <!-- Result modal -->
+  <div id="mResult" class="modal hidden">
+    <div class="mbox small center">
+      <div id="mResultIcon" class="result-big-icon"></div>
+      <h2 id="mResultTitle"></h2>
+      <p id="mResultMsg"></p>
+      <div class="result-stats" id="mResultStats"></div>
+      <div class="mfooter center">
+        <button class="btn-ghost" onclick="closeM('mResult')">Đóng</button>
+        <button class="btn-primary" id="mResultRetry">Làm lại</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+
+</html>
