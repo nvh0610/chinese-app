@@ -24,7 +24,6 @@ http://localhost:5000
 ```
 
 ---
-
 ## Tính năng
 
 ### 📝 Trắc nghiệm từ vựng

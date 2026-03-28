@@ -17,207 +17,267 @@
   <!-- ══ LOGIN GATE ══════════════════════════════════════════════════════════ -->
   <div id="loginGate" class="gate">
     <div class="gate-bg">
-      <div class="gate-orb orb1"></div>
-      <div class="gate-orb orb2"></div>
-      <div class="gate-orb orb3"></div>
+      <div class="orb o1"></div>
+      <div class="orb o2"></div>
+      <div class="orb o3"></div>
     </div>
     <div class="gate-card">
-      <div class="gate-logo">
-        <span class="gate-zh">汉语</span>
-        <span class="gate-sub">学习平台</span>
-      </div>
+      <div class="gate-logo"><span class="gate-zh">汉</span><span class="gate-sub">汉语学习平台</span></div>
       <h1 class="gate-title">Học Tiếng Trung</h1>
-      <p class="gate-desc">Đăng nhập để bắt đầu hành trình học tập</p>
-      <div class="form-group">
-        <label>Tên đăng nhập</label>
-        <input type="text" id="gateUser" placeholder="username" autocomplete="username" />
+      <p class="gate-desc">Đăng nhập để bắt đầu hành trình</p>
+      <div class="form-group"><label>Tên đăng nhập</label>
+        <input type="text" id="gU" placeholder="username" autocomplete="username" />
       </div>
-      <div class="form-group">
-        <label>Mật khẩu</label>
-        <div class="pw-wrap">
-          <input type="password" id="gatePw" placeholder="••••••" autocomplete="current-password" />
-          <button class="pw-eye" onclick="togglePw('gatePw',this)" tabindex="-1">👁</button>
+      <div class="form-group"><label>Mật khẩu</label>
+        <div class="pw-wrap"><input type="password" id="gP" placeholder="••••••" autocomplete="current-password" />
+          <button class="pw-eye" onclick="togglePw('gP',this)" tabindex="-1">👁</button>
         </div>
       </div>
-      <div id="gateError" class="error-msg hidden"></div>
-      <button class="btn-primary full-width" onclick="doLogin()">Đăng nhập →</button>
-      <!-- <p class="gate-hint">admin / 123456 &nbsp;·&nbsp; user / 123456</p> -->
+      <div id="gErr" class="err-msg hidden"></div>
+      <button class="btn-primary fw" onclick="doLogin()">Đăng nhập →</button>
     </div>
   </div>
 
-  <!-- ══ APP ═════════════════════════════════════════════════════════════════ -->
-  <div id="appShell" class="hidden">
+  <!-- ══ APP SHELL ═══════════════════════════════════════════════════════════ -->
+  <div id="appShell" class="hidden app-shell">
 
-    <!-- Header -->
-    <header class="header">
-      <div class="header-inner">
-        <div class="logo">
-          <span class="logo-zh">汉</span>
-          <div class="logo-text">
-            <span class="logo-main">汉语学习</span>
-            <span class="logo-sub">Học Tiếng Trung</span>
-          </div>
-        </div>
-        <nav class="nav" id="mainNav">
-          <button class="nav-btn active" data-page="quiz-vocab" onclick="switchPage('quiz-vocab',this)">📝 Trắc
-            nghiệm</button>
-          <button class="nav-btn" data-page="quiz-type" onclick="switchPage('quiz-type',this)">✍️ Tự điền</button>
-          <button class="nav-btn" data-page="quiz-sent" onclick="switchPage('quiz-sent',this)">🔀 Sắp xếp câu</button>
-          <button class="nav-btn" data-page="manage" onclick="switchPage('manage',this)">📚 Kho từ</button>
-          <button class="nav-btn admin-only hidden" data-page="admin" onclick="switchPage('admin',this)">⚙️ Quản
-            lý</button>
-        </nav>
-        <div class="header-right">
-          <span class="user-chip" id="userChip"></span>
-          <button class="btn-logout" onclick="doLogout()">↩ Thoát</button>
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sb-logo">
+        <span class="sb-zh">汉</span>
+        <div class="sb-text" id="sbText">
+          <span class="sb-main">汉语学习</span>
+          <span class="sb-sub">Học Tiếng Trung</span>
         </div>
       </div>
-    </header>
-
-    <main class="main">
-
-      <!-- ══ PAGE: TRẮC NGHIỆM ══════════════════════════════════════════════════ -->
-      <div id="page-quiz-vocab" class="page active">
-        <div class="page-header">
-          <h1>📝 Trắc nghiệm từ vựng</h1>
-          <p>Chọn chữ Hán đúng với nghĩa tiếng Việt</p>
-        </div>
-        <div class="quiz-bar">
-          <select class="sel" id="vqTopic" onchange="resetVQ()">
-            <option value="">Tất cả chủ đề</option>
-          </select>
-          <button class="chip-btn" onclick="resetVQ()">🔄 Reset</button>
-          <div class="score-chips">
-            <span class="chip green">✓ <strong id="vqRight">0</strong></span>
-            <span class="chip red">✗ <strong id="vqWrong">0</strong></span>
-            <span class="chip gray">Câu <strong id="vqDone">0</strong>/<strong id="vqTotal">?</strong></span>
-          </div>
-        </div>
-        <div class="progress-wrap">
-          <div class="progress-fill" id="vqProgress"></div>
-        </div>
-        <div class="qcard" id="vqCard">
-          <div class="qload">Đang tải...</div>
-        </div>
+      <nav class="sb-nav">
+        <button class="sb-btn active" data-page="quiz-vocab" onclick="switchPage('quiz-vocab',this)">
+          <span class="sb-icon">📝</span><span class="sb-label">Trắc nghiệm</span>
+        </button>
+        <button class="sb-btn" data-page="quiz-type" onclick="switchPage('quiz-type',this)">
+          <span class="sb-icon">✍️</span><span class="sb-label">Tự điền</span>
+        </button>
+        <button class="sb-btn" data-page="quiz-sent" onclick="switchPage('quiz-sent',this)">
+          <span class="sb-icon">🔀</span><span class="sb-label">Sắp xếp câu</span>
+        </button>
+        <button class="sb-btn" data-page="manage" onclick="switchPage('manage',this)">
+          <span class="sb-icon">📚</span><span class="sb-label">Kho từ</span>
+        </button>
+        <button class="sb-btn" data-page="leaderboard" onclick="switchPage('leaderboard',this)">
+          <span class="sb-icon">🏆</span><span class="sb-label">Bảng xếp hạng</span>
+        </button>
+        <button class="sb-btn admin-only hidden" data-page="admin" onclick="switchPage('admin',this)">
+          <span class="sb-icon">⚙️</span><span class="sb-label">Quản lý</span>
+        </button>
+      </nav>
+      <div class="sb-footer">
+        <div class="sb-user" id="sbUser"></div>
+        <button class="sb-logout" onclick="doLogout()"><span class="sb-icon">↩</span><span class="sb-label">Đăng
+            xuất</span></button>
       </div>
+      <button class="sb-toggle" id="sbToggle" onclick="toggleSidebar()" title="Thu/mở thanh bên">
+        <span id="sbArrow">‹</span>
+      </button>
+    </aside>
 
-      <!-- ══ PAGE: TỰ ĐIỀN CHỮ HÁN ════════════════════════════════════════════ -->
-      <div id="page-quiz-type" class="page">
-        <div class="page-header">
-          <h1>✍️ Tự điền chữ Hán</h1>
-          <p>Nhìn nghĩa tiếng Việt, tự nhập chữ Hán</p>
-        </div>
-        <div class="quiz-bar">
-          <select class="sel" id="tqTopic" onchange="resetTQ()">
-            <option value="">Tất cả chủ đề</option>
-          </select>
-          <button class="chip-btn" onclick="resetTQ()">🔄 Reset</button>
-          <div class="score-chips">
-            <span class="chip green">✓ <strong id="tqRight">0</strong></span>
-            <span class="chip red">✗ <strong id="tqWrong">0</strong></span>
-            <span class="chip gray">Câu <strong id="tqDone">0</strong>/<strong id="tqTotal">?</strong></span>
+    <!-- MAIN CONTENT -->
+    <div class="content" id="content">
+      <main class="main">
+
+        <!-- PAGE: TRẮC NGHIỆM -->
+        <div id="page-quiz-vocab" class="page active">
+          <div class="ph">
+            <h1>📝 Trắc nghiệm từ vựng</h1>
+            <p>Chọn chữ Hán đúng với nghĩa tiếng Việt</p>
           </div>
-        </div>
-        <div class="progress-wrap">
-          <div class="progress-fill" id="tqProgress"></div>
-        </div>
-        <div class="qcard" id="tqCard">
-          <div class="qload">Đang tải...</div>
-        </div>
-      </div>
-
-      <!-- ══ PAGE: SẮP XẾP CÂU ════════════════════════════════════════════════ -->
-      <div id="page-quiz-sent" class="page">
-        <div class="page-header">
-          <h1>🔀 Sắp xếp câu</h1>
-          <p>Nhấn chọn từng chữ để ghép thành câu đúng</p>
-        </div>
-        <div class="quiz-bar">
-          <select class="sel" id="sqTopic" onchange="resetSQ()">
-            <option value="">Tất cả chủ đề</option>
-          </select>
-          <button class="chip-btn" onclick="resetSQ()">🔄 Reset</button>
-          <div class="score-chips">
-            <span class="chip green">✓ <strong id="sqRight">0</strong></span>
-            <span class="chip red">✗ <strong id="sqWrong">0</strong></span>
-            <span class="chip gray">Câu <strong id="sqDone">0</strong>/<strong id="sqTotal">?</strong></span>
-          </div>
-        </div>
-        <div class="progress-wrap">
-          <div class="progress-fill" id="sqProgress"></div>
-        </div>
-        <div class="qcard" id="sqCard">
-          <div class="qload">Đang tải...</div>
-        </div>
-      </div>
-
-      <!-- ══ PAGE: KHO TỪ ══════════════════════════════════════════════════════ -->
-      <div id="page-manage" class="page">
-        <div class="page-header">
-          <h1>📚 Kho từ vựng</h1>
-          <p id="manageDesc">Xem và quản lý từ vựng của bạn</p>
-        </div>
-        <div class="tabs">
-          <button class="tab active" onclick="switchTab('tv',this)">📖 Từ vựng</button>
-          <button class="tab" onclick="switchTab('ts',this)">✍️ Câu luyện</button>
-          <button class="tab" onclick="switchTab('tt',this)">🏷️ Chủ đề</button>
-        </div>
-
-        <div id="tab-tv" class="tab-pane active">
-          <div class="tb-bar">
-            <select class="sel" id="mvTopic" onchange="loadVList()">
+          <div class="qbar">
+            <select class="sel" id="vqTopic" onchange="resetVQ()">
               <option value="">Tất cả chủ đề</option>
             </select>
-            <select class="sel" id="mvScope" onchange="loadVList()">
-              <option value="">Tất cả</option>
-              <option value="public">Công khai</option>
-              <option value="private">Của tôi</option>
-            </select>
-            <button class="btn-primary" onclick="openVModal()">+ Thêm từ</button>
+            <button class="chip-btn" onclick="resetVQ()">🔄 Reset</button>
+            <div class="score-row">
+              <span class="chip g">✓ <strong id="vqR">0</strong></span>
+              <span class="chip r">✗ <strong id="vqW">0</strong></span>
+              <span class="chip gray">🔥 <strong id="vqStreak">0</strong></span>
+              <span class="chip gray"><strong id="vqDone">0</strong>/<strong id="vqTotal">?</strong></span>
+            </div>
           </div>
-          <div id="vList"></div>
+          <div class="pbar">
+            <div class="pfill" id="vqProg"></div>
+          </div>
+          <div class="qcard" id="vqCard">
+            <div class="qload">Đang tải...</div>
+          </div>
         </div>
 
-        <div id="tab-ts" class="tab-pane">
-          <div class="tb-bar">
-            <select class="sel" id="msTopic" onchange="loadSList()">
+        <!-- PAGE: TỰ ĐIỀN -->
+        <div id="page-quiz-type" class="page">
+          <div class="ph">
+            <h1>✍️ Tự điền chữ Hán</h1>
+            <p>Nhìn nghĩa tiếng Việt, tự nhập chữ Hán</p>
+          </div>
+          <div class="qbar">
+            <select class="sel" id="tqTopic" onchange="resetTQ()">
               <option value="">Tất cả chủ đề</option>
             </select>
-            <button class="btn-primary" onclick="openSModal()">+ Thêm câu</button>
+            <button class="chip-btn" onclick="resetTQ()">🔄 Reset</button>
+            <div class="score-row">
+              <span class="chip g">✓ <strong id="tqR">0</strong></span>
+              <span class="chip r">✗ <strong id="tqW">0</strong></span>
+              <span class="chip gray">🔥 <strong id="tqStreak">0</strong></span>
+              <span class="chip gray"><strong id="tqDone">0</strong>/<strong id="tqTotal">?</strong></span>
+            </div>
           </div>
-          <div id="sList"></div>
-        </div>
-
-        <div id="tab-tt" class="tab-pane">
-          <div class="tb-bar">
-            <button class="btn-primary" onclick="openTModal()">+ Thêm chủ đề</button>
+          <div class="pbar">
+            <div class="pfill" id="tqProg"></div>
           </div>
-          <div id="tList"></div>
+          <div class="qcard" id="tqCard">
+            <div class="qload">Đang tải...</div>
+          </div>
         </div>
-      </div>
 
-      <!-- ══ PAGE: QUẢN LÝ (ADMIN) ════════════════════════════════════════════ -->
-      <div id="page-admin" class="page">
-        <div class="page-header">
-          <h1>⚙️ Quản lý người dùng</h1>
-          <p>Tạo, xóa, đổi mật khẩu tài khoản</p>
+        <!-- PAGE: SẮP XẾP CÂU -->
+        <div id="page-quiz-sent" class="page">
+          <div class="ph">
+            <h1>🔀 Sắp xếp câu</h1>
+            <p>Nhấn chọn từng chữ để ghép thành câu đúng</p>
+          </div>
+          <div class="qbar">
+            <select class="sel" id="sqTopic" onchange="resetSQ()">
+              <option value="">Tất cả chủ đề</option>
+            </select>
+            <button class="chip-btn" onclick="resetSQ()">🔄 Reset</button>
+            <div class="score-row">
+              <span class="chip g">✓ <strong id="sqR">0</strong></span>
+              <span class="chip r">✗ <strong id="sqW">0</strong></span>
+              <span class="chip gray">🔥 <strong id="sqStreak">0</strong></span>
+              <span class="chip gray"><strong id="sqDone">0</strong>/<strong id="sqTotal">?</strong></span>
+            </div>
+          </div>
+          <div class="pbar">
+            <div class="pfill" id="sqProg"></div>
+          </div>
+          <div class="qcard" id="sqCard">
+            <div class="qload">Đang tải...</div>
+          </div>
         </div>
-        <div class="tb-bar">
-          <button class="btn-primary" onclick="openUserModal()">+ Tạo tài khoản</button>
+
+        <!-- PAGE: KHO TỪ -->
+        <div id="page-manage" class="page">
+          <div class="ph">
+            <h1>📚 Kho từ vựng</h1>
+            <p>Xem và quản lý nội dung học tập</p>
+          </div>
+          <div class="tabs">
+            <button class="tab active" onclick="switchTab('tv',this)">📖 Từ vựng</button>
+            <button class="tab" onclick="switchTab('ts',this)">✍️ Câu luyện</button>
+            <button class="tab" onclick="switchTab('tt',this)">🏷️ Chủ đề</button>
+          </div>
+
+          <div id="tab-tv" class="tab-pane active">
+            <div class="tb-bar">
+              <input type="text" class="search-input" id="mvSearch" placeholder="🔍 Tìm kiếm..."
+                oninput="debounce(loadVList,400)()" />
+              <select class="sel" id="mvTopic" onchange="loadVList()">
+                <option value="">Tất cả chủ đề</option>
+              </select>
+              <select class="sel" id="mvScope" onchange="loadVList()">
+                <option value="">Tất cả</option>
+                <option value="public">Công khai</option>
+                <option value="private">Của tôi</option>
+              </select>
+              <button class="btn-primary" onclick="openVModal()">+ Thêm từ</button>
+              <button class="btn-ghost" onclick="openImport()">📥 Import Excel</button>
+            </div>
+            <div id="vList"></div>
+            <div id="vPager" class="pager"></div>
+          </div>
+
+          <div id="tab-ts" class="tab-pane">
+            <div class="tb-bar">
+              <select class="sel" id="msTopic" onchange="loadSList()">
+                <option value="">Tất cả chủ đề</option>
+              </select>
+              <button class="btn-primary" onclick="openSModal()">+ Thêm câu</button>
+              <button class="btn-ghost" onclick="openImportSent()">📥 Import Excel</button>
+            </div>
+            <div id="sList"></div>
+          </div>
+
+          <div id="tab-tt" class="tab-pane">
+            <div class="tb-bar">
+              <input type="text" class="search-input" id="ttSearch" placeholder="🔍 Tìm chủ đề..."
+                oninput="debounce(loadTList,400)()" />
+              <button class="btn-primary" onclick="openTModal()">+ Thêm chủ đề</button>
+            </div>
+            <div id="tList"></div>
+            <div id="tPager" class="pager"></div>
+          </div>
         </div>
-        <div id="userList"></div>
-      </div>
 
-    </main>
-  </div><!-- /appShell -->
+        <!-- PAGE: LEADERBOARD -->
+        <div id="page-leaderboard" class="page">
+          <div class="ph">
+            <h1>🏆 Bảng xếp hạng</h1>
+            <p>Streak liên tiếp cao nhất theo từng chủ đề và thời gian</p>
+          </div>
+          <div class="lb-filters">
+            <select class="sel" id="lbTopic" onchange="loadLB()">
+              <option value="">Tất cả chủ đề</option>
+            </select>
+            <select class="sel" id="lbType" onchange="loadLB()">
+              <option value="all">Tất cả loại</option>
+              <option value="vocab">Trắc nghiệm</option>
+              <option value="type">Tự điền</option>
+              <option value="sent">Sắp xếp câu</option>
+            </select>
+            <select class="sel" id="lbPeriod" onchange="loadLB()">
+              <option value="all">Mọi thời gian</option>
+              <option value="today">Hôm nay</option>
+              <option value="week">7 ngày qua</option>
+              <option value="month">30 ngày qua</option>
+            </select>
+          </div>
+          <div id="lbList"></div>
+        </div>
 
-  <!-- ══ MODALS ════════════════════════════════════════════════════════════ -->
+        <!-- PAGE: ADMIN -->
+        <div id="page-admin" class="page">
+          <div class="ph">
+            <h1>⚙️ Quản lý người dùng</h1>
+            <p>Tạo, xóa, cấu hình thời hạn tài khoản</p>
+          </div>
+          <div class="tb-bar"><button class="btn-primary" onclick="openUModal()">+ Tạo tài khoản</button></div>
+          <div id="uList"></div>
+        </div>
 
-  <!-- Vocab modal -->
+      </main>
+
+      <!-- FOOTER -->
+      <footer class="footer">
+        <span>汉语学习平台 &copy; 2024</span>
+        <span class="footer-sep">·</span>
+        <span>Made by <strong>nvh0610</strong></span>
+        <span class="footer-sep">·</span>
+        <a href="https://github.com/nvh0610" target="_blank" class="footer-link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"
+            style="vertical-align: middle; margin-top: -2px;">
+            <path
+              d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+          </svg>
+          GitHub
+        </a>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ══ MODALS ══════════════════════════════════════════════════════════════ -->
+
+  <!-- Vocab -->
   <div id="mVocab" class="modal hidden">
     <div class="mbox">
       <div class="mhead">
-        <h3 id="mVocabTitle">Thêm từ vựng</h3><button onclick="closeM('mVocab')">✕</button>
+        <h3 id="mVTit">Thêm từ vựng</h3><button onclick="closeM('mVocab')">✕</button>
       </div>
       <input type="hidden" id="mvId" />
       <div class="frow">
@@ -228,17 +288,83 @@
         <div class="fg"><label>Pinyin *</label><input type="text" id="mvPy" placeholder="nǐ hǎo" /></div>
         <div class="fg"><label>Tiếng Việt *</label><input type="text" id="mvVn" placeholder="Xin chào" /></div>
       </div>
-      <div class="msep">Câu ví dụ <span class="opt">(không bắt buộc)</span></div>
+      <div class="msep">Câu ví dụ <span class="mopt">(không bắt buộc)</span></div>
       <div class="fg"><label>Chữ Hán</label><input type="text" id="mvEhz" class="hz" placeholder="你好，我叫小明。" /></div>
       <div class="fg"><label>Pinyin</label><input type="text" id="mvEpy" placeholder="Nǐ hǎo..." /></div>
       <div class="fg"><label>Tiếng Việt</label><input type="text" id="mvEvn" placeholder="Xin chào..." /></div>
-      <div id="mVocabErr" class="error-msg hidden"></div>
+      <div id="mVErr" class="err-msg hidden"></div>
       <div class="mfooter"><button class="btn-ghost" onclick="closeM('mVocab')">Hủy</button><button class="btn-primary"
           onclick="saveVocab()">Lưu</button></div>
     </div>
   </div>
 
-  <!-- Sentence modal -->
+  <!-- Import Vocab -->
+  <div id="mImport" class="modal hidden">
+    <div class="mbox small">
+      <div class="mhead">
+        <h3>📥 Import từ vựng từ Excel</h3><button onclick="closeM('mImport')">✕</button>
+      </div>
+      <div class="fg">
+        <label>Chủ đề *</label>
+        <select id="impTSel" class="sel w100"></select>
+      </div>
+      <div class="fg">
+        <label>File Excel (.xlsx, .xls)</label>
+        <input type="file" id="impFile" accept=".xlsx,.xls"
+          style="padding:8px;border:1.5px solid var(--c-bdr);border-radius:var(--r-sm);width:100%;font-family:var(--f);font-size:13px;cursor:pointer" />
+      </div>
+
+      <!-- Hướng dẫn cột -->
+      <div
+        style="background:var(--c-bg);border-radius:var(--r-sm);padding:14px;margin:8px 0;font-size:12px;line-height:1.8">
+        <div style="font-weight:700;color:var(--c-ink2);margin-bottom:6px">📋 Định dạng file Excel:</div>
+        <div style="overflow-x:auto">
+          <table style="border-collapse:collapse;width:100%;font-size:11px">
+            <thead>
+              <tr style="background:var(--c-bdr)">
+                <th style="padding:4px 8px;text-align:left;border-radius:4px 0 0 4px">hanzi *</th>
+                <th style="padding:4px 8px;text-align:left">pinyin *</th>
+                <th style="padding:4px 8px;text-align:left">vietnamese *</th>
+                <th style="padding:4px 8px;text-align:left">example_sentence</th>
+                <th style="padding:4px 8px;text-align:left">example_pinyin</th>
+                <th style="padding:4px 8px;text-align:left;border-radius:0 4px 4px 0">example_vietnamese</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding:4px 8px;font-family:var(--fz);font-weight:700">爱</td>
+                <td style="padding:4px 8px">ài</td>
+                <td style="padding:4px 8px">yêu</td>
+                <td style="padding:4px 8px;font-family:var(--fz)">我爱你。</td>
+                <td style="padding:4px 8px">Wǒ ài nǐ.</td>
+                <td style="padding:4px 8px">Tôi yêu bạn.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:8px;color:var(--c-ink3)">
+          <span style="color:var(--c-red);font-weight:600">*</span> Bắt buộc &nbsp;·&nbsp;
+          3 cột example có thể để trống &nbsp;·&nbsp;
+          Dòng nào thiếu hanzi/pinyin/vietnamese sẽ bị bỏ qua
+        </div>
+      </div>
+
+      <div id="impProgress" class="hidden" style="text-align:center;padding:10px;color:var(--c-ink3);font-size:13px">
+        ⏳ Đang import...
+      </div>
+      <div id="impResult" class="hidden"
+        style="background:var(--c-grn-s);color:var(--c-grn);border-radius:var(--r-sm);padding:10px 14px;font-size:13px;font-weight:600">
+      </div>
+      <div id="impErr" class="err-msg hidden"></div>
+
+      <div class="mfooter">
+        <button class="btn-ghost" onclick="closeM('mImport')">Đóng</button>
+        <button class="btn-primary" onclick="doImport()">📥 Import</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sentence -->
   <div id="mSent" class="modal hidden">
     <div class="mbox">
       <div class="mhead">
@@ -249,38 +375,37 @@
       <div class="fg"><label>Pinyin</label><input type="text" id="msPy" placeholder="Wǒ hěn gāoxìng rènshi nǐ" /></div>
       <div class="fg"><label>Nghĩa tiếng Việt *</label><input type="text" id="msVn"
           placeholder="Tôi rất vui được gặp bạn" /></div>
-      <div id="mSentErr" class="error-msg hidden"></div>
+      <div id="mSErr" class="err-msg hidden"></div>
       <div class="mfooter"><button class="btn-ghost" onclick="closeM('mSent')">Hủy</button><button class="btn-primary"
           onclick="saveSent()">Lưu</button></div>
     </div>
   </div>
 
-  <!-- Topic modal -->
+  <!-- Topic -->
   <div id="mTopic" class="modal hidden">
     <div class="mbox small">
       <div class="mhead">
-        <h3 id="mTopicTitle">Thêm chủ đề</h3><button onclick="closeM('mTopic')">✕</button>
+        <h3 id="mTTit">Thêm chủ đề</h3><button onclick="closeM('mTopic')">✕</button>
       </div>
       <input type="hidden" id="mtId" />
       <div class="fg"><label>Tên chủ đề *</label><input type="text" id="mtName" placeholder="Ví dụ: Cảm xúc" /></div>
       <div class="fg"><label>Mô tả</label><input type="text" id="mtDesc" placeholder="Mô tả ngắn" /></div>
-      <div id="mTopicErr" class="error-msg hidden"></div>
+      <div id="mTErr" class="err-msg hidden"></div>
       <div class="mfooter"><button class="btn-ghost" onclick="closeM('mTopic')">Hủy</button><button class="btn-primary"
           onclick="saveTopic()">Lưu</button></div>
     </div>
   </div>
 
-  <!-- User modal -->
+  <!-- User -->
   <div id="mUser" class="modal hidden">
     <div class="mbox small">
       <div class="mhead">
-        <h3 id="mUserTitle">Tạo tài khoản</h3><button onclick="closeM('mUser')">✕</button>
+        <h3 id="mUTit">Tạo tài khoản</h3><button onclick="closeM('mUser')">✕</button>
       </div>
       <input type="hidden" id="muId" />
-      <div class="fg"><label>Tên đăng nhập *</label><input type="text" id="muName" placeholder="username" id="muName" />
-      </div>
+      <div class="fg"><label>Tên đăng nhập *</label><input type="text" id="muName" placeholder="username" /></div>
       <div class="fg">
-        <label>Mật khẩu <span id="muPwHint" class="opt">(để trống = giữ nguyên)</span></label>
+        <label>Mật khẩu <span id="muPwHint" class="mopt">(để trống = giữ nguyên)</span></label>
         <div class="pw-wrap"><input type="password" id="muPw" placeholder="••••••" /><button class="pw-eye"
             onclick="togglePw('muPw',this)" tabindex="-1">👁</button></div>
       </div>
@@ -290,38 +415,116 @@
           <option value="admin">Admin</option>
         </select>
       </div>
-      <div id="mUserErr" class="error-msg hidden"></div>
+      <div class="frow">
+        <div class="fg"><label>Kích hoạt từ ngày</label><input type="date" id="muFrom" /></div>
+        <div class="fg"><label>Hết hạn ngày</label><input type="date" id="muUntil" /></div>
+      </div>
+      <div class="fg">
+        <label class="check-label">
+          <input type="checkbox" id="muActive" checked /> Tài khoản đang hoạt động
+        </label>
+      </div>
+      <div id="mUErr" class="err-msg hidden"></div>
       <div class="mfooter"><button class="btn-ghost" onclick="closeM('mUser')">Hủy</button><button class="btn-primary"
           onclick="saveUser()">Lưu</button></div>
     </div>
   </div>
 
-  <!-- Confirm modal -->
-  <div id="mConfirm" class="modal hidden">
-    <div class="mbox small center">
-      <div class="confirm-icon">🗑️</div>
-      <h3>Xác nhận xóa</h3>
-      <p id="mConfirmMsg"></p>
-      <div class="mfooter center"><button class="btn-ghost" onclick="closeM('mConfirm')">Hủy</button><button
-          class="btn-danger" onclick="runDelete()">Xóa</button></div>
-    </div>
-  </div>
+  <!-- Import Sentences -->
+  <div id="mImportSent" class="modal hidden">
+    <div class="mbox small">
+      <div class="mhead">
+        <h3>📥 Import câu luyện tập từ Excel</h3><button onclick="closeM('mImportSent')">✕</button>
+      </div>
+      <div class="fg">
+        <label>Chủ đề *</label>
+        <select id="impSTSel" class="sel w100"></select>
+      </div>
+      <div class="fg">
+        <label>File Excel (.xlsx, .xls)</label>
+        <input type="file" id="impSFile" accept=".xlsx,.xls"
+          style="padding:8px;border:1.5px solid var(--c-bdr);border-radius:var(--r-sm);width:100%;font-family:var(--f);font-size:13px;cursor:pointer" />
+      </div>
 
-  <!-- Result modal -->
-  <div id="mResult" class="modal hidden">
-    <div class="mbox small center">
-      <div id="mResultIcon" class="result-big-icon"></div>
-      <h2 id="mResultTitle"></h2>
-      <p id="mResultMsg"></p>
-      <div class="result-stats" id="mResultStats"></div>
-      <div class="mfooter center">
-        <button class="btn-ghost" onclick="closeM('mResult')">Đóng</button>
-        <button class="btn-primary" id="mResultRetry">Làm lại</button>
+      <!-- Hướng dẫn cột -->
+      <div
+        style="background:var(--c-bg);border-radius:var(--r-sm);padding:14px;margin:8px 0;font-size:12px;line-height:1.8">
+        <div style="font-weight:700;color:var(--c-ink2);margin-bottom:6px">📋 Định dạng file Excel:</div>
+        <div style="overflow-x:auto">
+          <table style="border-collapse:collapse;width:100%;font-size:11px">
+            <thead>
+              <tr style="background:var(--c-bdr)">
+                <th style="padding:4px 8px;text-align:left;border-radius:4px 0 0 4px">hanzi *</th>
+                <th style="padding:4px 8px;text-align:left">pinyin</th>
+                <th style="padding:4px 8px;text-align:left;border-radius:0 4px 4px 0">vietnamese *</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding:4px 8px;font-family:var(--fz);font-weight:700">我爱你。</td>
+                <td style="padding:4px 8px">Wǒ ài nǐ.</td>
+                <td style="padding:4px 8px">Tôi yêu bạn.</td>
+              </tr>
+              <tr style="background:var(--c-bg)">
+                <td style="padding:4px 8px;font-family:var(--fz);font-weight:700">你好吗？</td>
+                <td style="padding:4px 8px">Nǐ hǎo ma?</td>
+                <td style="padding:4px 8px">Bạn có khỏe không?</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:8px;color:var(--c-ink3)">
+          <span style="color:var(--c-red);font-weight:600">*</span> Bắt buộc &nbsp;·&nbsp;
+          Cột pinyin có thể để trống &nbsp;·&nbsp;
+          Dòng thiếu hanzi hoặc vietnamese sẽ bị bỏ qua
+        </div>
+      </div>
+
+      <div id="impSProgress" class="hidden" style="text-align:center;padding:10px;color:var(--c-ink3);font-size:13px">
+        ⏳ Đang import...
+      </div>
+      <div id="impSResult" class="hidden"
+        style="background:var(--c-grn-s);color:var(--c-grn);border-radius:var(--r-sm);padding:10px 14px;font-size:13px;font-weight:600">
+      </div>
+      <div id="impSErr" class="err-msg hidden"></div>
+
+      <div class="mfooter">
+        <button class="btn-ghost" onclick="closeM('mImportSent')">Đóng</button>
+        <button class="btn-primary" onclick="doImportSent()">📥 Import</button>
       </div>
     </div>
   </div>
 
-  <script src="/static/js/app.js"></script>
+  <!-- Confirm -->
+  <div id="mConfirm" class="modal hidden">
+    <div class="mbox small ctr">
+      <div style="font-size:48px;margin-bottom:10px">🗑️</div>
+      <h3>Xác nhận xóa</h3>
+      <p id="mConfMsg" style="color:var(--c-ink3);margin:12px 0 20px"></p>
+      <div class="mfooter ctr"><button class="btn-ghost" onclick="closeM('mConfirm')">Hủy</button><button
+          class="btn-danger" onclick="runDel()">Xóa</button></div>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div id="mResult" class="modal hidden">
+    <div class="mbox small ctr">
+      <div id="mRIcon" style="font-size:64px;margin-bottom:12px"></div>
+      <h2 id="mRTitle" style="font-family:var(--fz);font-size:22px;margin-bottom:6px"></h2>
+      <p id="mRMsg" style="color:var(--c-ink3)"></p>
+      <div id="mRStats" class="score-row" style="justify-content:center;margin:14px 0"></div>
+      <div class="mfooter ctr">
+        <button class="btn-ghost" onclick="closeM('mResult')">Đóng</button>
+        <button class="btn-primary" id="mRRetry">Làm lại</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/utils.js"></script>
+  <script src="/static/js/quiz.js"></script>
+  <script src="/static/js/manage.js"></script>
+  <script src="/static/js/leaderboard.js"></script>
+  <script src="/static/js/main.js"></script>
 </body>
 
 </html>
