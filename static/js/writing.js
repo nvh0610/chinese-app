@@ -28,23 +28,27 @@ async function loadWR() {
       <!-- Info bên trái -->
       <div style="flex:1;min-width:200px">
         <div class="ql">Luyện viết chữ</div>
-        <div style="font-family:var(--fz);font-size:56px;font-weight:900;color:var(--c-ink);line-height:1;margin-bottom:8px">${q.hanzi}</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="font-family:var(--fz);font-size:56px;font-weight:900;color:var(--c-ink);line-height:1">${q.hanzi}</div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+            <button class="speak-btn-f" style="font-size:18px;border:1.5px solid var(--c-pink-s);border-radius:var(--r-sm);padding:5px 8px;background:var(--c-pink-s)" onclick="speakZH('${esc(q.hanzi)}','female')" title="Giọng nữ">🔊</button>
+            <button class="speak-btn-m" style="font-size:18px;border:1.5px solid var(--c-blue-s);border-radius:var(--r-sm);padding:5px 8px;background:var(--c-blue-s)" onclick="speakZH('${esc(q.hanzi)}','male')" title="Giọng nam">🔉</button>
+        </div>
+        </div>
         <div style="font-style:italic;color:var(--c-blue);font-size:16px;margin-bottom:4px">${q.pinyin}</div>
         <div style="font-size:18px;font-weight:600;color:var(--c-ink);margin-bottom:12px">${q.vietnamese}</div>
         <span class="qtag" style="color:${fg};background:${bg}">${q.topic_name}</span>
         ${q.example_sentence ? `
         <div class="vex" style="margin-top:16px">
-          <div class="vex-hz">${q.example_sentence}</div>
-          <div class="vex-py">${q.example_pinyin || ''}</div>
-          <div class="vex-vn">${q.example_vietnamese || ''}</div>
+        <div class="vex-hz">${q.example_sentence}</div>
+        <div class="vex-py">${q.example_pinyin || ''}</div>
+        <div class="vex-vn">${q.example_vietnamese || ''}</div>
         </div>` : ''}
         <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn-ghost" onclick="wrAnimateChar()">▶ Xem nét</button>
-          <button class="btn-ghost" onclick="wrHint()">💡 Gợi ý nét</button>
-          <button class="btn-ghost" id="wrOutlineBtn" onclick="wrToggleOutline()">👁 Ẩn nét mờ</button>
-          <button class="btn-ghost" onclick="wrRetry()">🔄 Thử lại</button>
-          <button class="speak-btn-f" style="font-size:18px;border:1.5px solid var(--c-bdr);border-radius:var(--r-sm);padding:5px 8px" onclick="speakZH('${esc(q.hanzi)}','female')" title="Giọng nữ">🔊</button>
-          <button class="speak-btn-m" style="font-size:18px;border:1.5px solid var(--c-bdr);border-radius:var(--r-sm);padding:5px 8px" onclick="speakZH('${esc(q.hanzi)}','male')" title="Giọng nam">🔉</button>
+        <button class="btn-ghost" onclick="wrAnimateChar()">▶ Xem nét</button>
+        <button class="btn-ghost" onclick="wrHint()">💡 Gợi ý nét</button>
+        <button class="btn-ghost" id="wrOutlineBtn" onclick="wrToggleOutline()">👁 Ẩn nét mờ</button>
+        <button class="btn-ghost" onclick="wrRetry()">🔄 Thử lại</button>
         </div>
       </div>
 
