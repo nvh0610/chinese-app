@@ -9,8 +9,8 @@ from routes.quiz import quiz_bp
 app = Flask(__name__)
 app.secret_key = 'chinese_secret_nvh0610_2024'
 
-# with app.app_context():
-#     init_db()
+with app.app_context():
+    init_db()
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(users_bp)

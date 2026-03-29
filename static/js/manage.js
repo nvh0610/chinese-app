@@ -2,10 +2,11 @@
 let vPage = 1, tPage = 1;
 let deleteCb = null;
 let allTopics = [];
+let sPage = 1; // thêm dòng này
 
 async function loadAllTopics() {
   allTopics = await api('/api/topics/all');
-  const selIds = ['vqTopic', 'tqTopic', 'sqTopic', 'mvTopic', 'msTopic', 'lbTopic', 'mvTSel', 'msTSel'];
+  const selIds = ['vqTopic', 'tqTopic', 'sqTopic', 'mvTopic', 'msTopic', 'lbTopic', 'mvTSel', 'msTSel', 'wrTopic'];
   selIds.forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -58,12 +59,19 @@ async function loadVList(page = 1) {
 }
 
 // ── Sentence list ───────────────────────────────────────────────────────────
-async function loadSList() {
+async function loadSList(page = 1) {
+  sPage = page;
   const tid = document.getElementById('msTopic').value;
-  const params = new URLSearchParams(tid ? { topic_id: tid } : {});
-  const sents = await api('/api/sentences?' + params);
+  const params = new URLSearchParams({ page, per_page: 20 });
+  if (tid) params.set('topic_id', tid);
+  const data = await api('/api/sentences?' + params);
+
+  // BE trả về array thì wrap lại cho đồng nhất
+  const sents = Array.isArray(data) ? data : (data.items || []);
+  const total = Array.isArray(data) ? data.length : (data.total || 0);
+
   const cont = document.getElementById('sList');
-  if (!sents.length) { cont.innerHTML = emptyHtml('Chưa có câu luyện tập nào.'); return; }
+  if (!sents.length) { cont.innerHTML = emptyHtml('Chưa có câu luyện tập nào.'); document.getElementById('sPager').innerHTML = ''; return; }
   cont.innerHTML = sents.map(s => `
     <div class="sitem">
       <div class="sitem-d">
@@ -78,6 +86,7 @@ async function loadSList() {
       </div>` : ''}
     </div>
   `).join('');
+  document.getElementById('sPager').innerHTML = pagerHtml(sPage, total, 20, 'loadSList');
 }
 
 // ── Topic list ──────────────────────────────────────────────────────────────

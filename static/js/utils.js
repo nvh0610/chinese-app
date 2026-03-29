@@ -1,14 +1,14 @@
 // ══ Shared Utilities ══════════════════════════════════════════════════════
 const TAG_COLORS = [
-  ['#1d4ed8','#dbeafe'], ['#15803d','#dcfce7'], ['#b45309','#fef3c7'],
-  ['#7c3aed','#ede9fe'], ['#db2777','#fce7f3'], ['#0f766e','#ccfbf1'],
-  ['#c2410c','#ffedd5'], ['#0369a1','#e0f2fe'], ['#6d28d9','#f5f3ff'],
-  ['#047857','#d1fae5'],
+  ['#1d4ed8', '#dbeafe'], ['#15803d', '#dcfce7'], ['#b45309', '#fef3c7'],
+  ['#7c3aed', '#ede9fe'], ['#db2777', '#fce7f3'], ['#0f766e', '#ccfbf1'],
+  ['#c2410c', '#ffedd5'], ['#0369a1', '#e0f2fe'], ['#6d28d9', '#f5f3ff'],
+  ['#047857', '#d1fae5'],
 ];
 const tagColorMap = {};
 function tagColor(name) {
   if (!tagColorMap[name]) {
-    const idx = Math.abs([...name].reduce((a,c)=>a+c.charCodeAt(0),0)) % TAG_COLORS.length;
+    const idx = Math.abs([...name].reduce((a, c) => a + c.charCodeAt(0), 0)) % TAG_COLORS.length;
     tagColorMap[name] = TAG_COLORS[idx];
   }
   return tagColorMap[name];
@@ -20,7 +20,7 @@ function topicTagHtml(name, scope) {
 
 function esc(s) {
   if (!s) return '';
-  return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+  return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
 }
 
 function emptyHtml(msg) {
@@ -53,12 +53,12 @@ async function api(url, method = 'GET', body = null) {
   try {
     const res = await fetch(url, opts);
     return await res.json();
-  } catch(e) { return { error: 'Lỗi kết nối' }; }
+  } catch (e) { return { error: 'Lỗi kết nối' }; }
 }
 
 let _debTimers = {};
 function debounce(fn, ms) {
-  return function(...args) {
+  return function (...args) {
     clearTimeout(_debTimers[fn]);
     _debTimers[fn] = setTimeout(() => fn(...args), ms);
   };
@@ -68,23 +68,27 @@ function pagerHtml(page, total, perPage, onPageFn) {
   const pages = Math.ceil(total / perPage);
   if (pages <= 1) return '';
   let html = '';
-  if (page > 1) html += `<button class="pager-btn" onclick="${onPageFn}(${page-1})">← Trước</button>`;
-  for (let p = Math.max(1,page-2); p <= Math.min(pages,page+2); p++) {
-    html += `<button class="pager-btn ${p===page?'active':''}" onclick="${onPageFn}(${p})">${p}</button>`;
+  if (page > 1) html += `<button class="pager-btn" onclick="${onPageFn}(${page - 1})">← Trước</button>`;
+  for (let p = Math.max(1, page - 2); p <= Math.min(pages, page + 2); p++) {
+    html += `<button class="pager-btn ${p === page ? 'active' : ''}" onclick="${onPageFn}(${p})">${p}</button>`;
   }
-  if (page < pages) html += `<button class="pager-btn" onclick="${onPageFn}(${page+1})">Sau →</button>`;
+  if (page < pages) html += `<button class="pager-btn" onclick="${onPageFn}(${page + 1})">Sau →</button>`;
   return html;
 }
 
-function revealHtml(ok, hanzi, pinyin, ex, expy, exvn, showAns=true) {
+function revealHtml(ok, hanzi, pinyin, ex, expy, exvn, showAns = true) {
   return `
-    <div class="rv-label ${ok?'ok':'bad'}">${ok ? '✓ Đúng rồi!' : '✗ Chưa đúng!'}</div>
-    ${(!ok&&showAns) ? `<div style="margin-bottom:4px">Đáp án: <span class="rv-hz">${hanzi}</span></div>` : (ok ? `<span class="rv-hz">${hanzi}</span>` : '')}
-    <div class="rv-py">${pinyin||''}</div>
+    <div class="rv-label ${ok ? 'ok' : 'bad'}">${ok ? '✓ Đúng rồi!' : '✗ Chưa đúng!'}</div>
+    ${(!ok && showAns) ? `<div style="margin-bottom:4px">Đáp án: 
+  <span class="rv-hz">${hanzi}</span>
+  <button class="speak-btn" onclick="speakZH('${hanzi}')" title="Nghe phát âm">🔊</button>
+</div>` : (ok ? `<span class="rv-hz">${hanzi}</span>
+  <button class="speak-btn" onclick="speakZH('${hanzi}')" title="Nghe phát âm">🔊</button>` : '')}
+    <div class="rv-py">${pinyin || ''}</div>
     ${ex ? `<div class="rv-ex">
       <div class="rv-ex-hz">${ex}</div>
-      <div class="rv-ex-py">${expy||''}</div>
-      <div class="rv-ex-vn">${exvn||''}</div>
+      <div class="rv-ex-py">${expy || ''}</div>
+      <div class="rv-ex-vn">${exvn || ''}</div>
     </div>` : ''}
   `;
 }
@@ -95,3 +99,21 @@ document.addEventListener('click', e => {
     if (e.target === m && m.id !== 'mConfirm') closeM(m.id);
   });
 });
+
+// ══ Text-to-Speech ════════════════════════════════════════════════════════════
+function speakZH(text) {
+  if (!text || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel(); // dừng nếu đang đọc
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'zh-CN';
+  utter.rate = 0.85;
+  utter.pitch = 1;
+  // Ưu tiên giọng Chinese nếu có
+  const voices = window.speechSynthesis.getVoices();
+  const zhVoice = voices.find(v => v.lang.startsWith('zh'));
+  if (zhVoice) utter.voice = zhVoice;
+  window.speechSynthesis.speak(utter);
+}
+
+// Cần load voices trước (một số browser lazy-load)
+window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();

@@ -11,13 +11,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('loginGate').classList.remove('hidden');
   }
 
-  document.getElementById('gP').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
-  document.getElementById('gU').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('gP').focus(); });
+  document.getElementById('gP').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  document.getElementById('gU').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('gP').focus(); });
 });
 
 async function showApp() {
   document.getElementById('loginGate').classList.add('hidden');
   document.getElementById('appShell').classList.remove('hidden');
+  await loadAllTopics();
 
   // Admin nav
   if (window.CU.role === 'admin') {
@@ -26,7 +27,7 @@ async function showApp() {
 
   // User chip in sidebar
   const sbUser = document.getElementById('sbUser');
-  sbUser.innerHTML = `<span style="font-size:15px">${window.CU.role==='admin'?'👑':'👤'}</span><span class="sb-label" style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis">${window.CU.username}</span>`;
+  sbUser.innerHTML = `<span style="font-size:15px">${window.CU.role === 'admin' ? '👑' : '👤'}</span><span class="sb-label" style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis">${window.CU.username}</span>`;
 
   await loadAllTopics();
   loadVQ(); loadTQ(); loadSQ();

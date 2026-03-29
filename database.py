@@ -71,6 +71,16 @@ def init_db():
         FOREIGN KEY (topic_id) REFERENCES topics(id) ON DELETE SET NULL
     )''')
 
+    c.execute('''CREATE TABLE IF NOT EXISTS word_errors (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        word_ref TEXT NOT NULL,      -- hanzi hoặc sentence hanzi
+        quiz_type TEXT NOT NULL,
+        error_count INTEGER DEFAULT 0,
+        UNIQUE(user_id, word_ref, quiz_type),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )''')
+
     conn.commit()
 
     # for uname, pw, role in [('admin','123456','admin'), ('user','123456','user')]:

@@ -2,7 +2,6 @@
 const VQ = { exclude: [], right: 0, wrong: 0, done: 0, total: 0, streak: 0, maxStreak: 0, finished: false };
 const TQ = { exclude: [], right: 0, wrong: 0, done: 0, total: 0, streak: 0, maxStreak: 0, finished: false };
 const SQ = { exclude: [], right: 0, wrong: 0, done: 0, total: 0, streak: 0, maxStreak: 0, finished: false, answer: [], correct: '', answered: false };
-
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function updateScoreUI(mode) {
   const s = { vq: VQ, tq: TQ, sq: SQ }[mode];
@@ -22,7 +21,7 @@ function checkFinished(mode) {
     // Save score
     const topicId = document.getElementById({ vq: 'vqTopic', tq: 'tqTopic', sq: 'sqTopic' }[mode]).value || null;
     const typeMap = { vq: 'vocab', tq: 'type', sq: 'sent' };
-    api('/api/scores', 'POST', { streak: s.maxStreak, topic_id: topicId, quiz_type: typeMap[mode] });
+    // api('/api/scores', 'POST', { streak: s.maxStreak, topic_id: topicId, quiz_type: typeMap[mode] });
     setTimeout(() => showResult(mode), 700);
   }
 }
@@ -67,14 +66,16 @@ async function loadVQ() {
   if (tid) params.set('topic_id', tid);
   const q = await api('/api/quiz/vocab?' + params);
   if (q.error) { card.innerHTML = emptyHtml('Không có từ vựng nào.'); return; }
+  vqCurrentQ = q;
   VQ.total = q.total;
   document.getElementById('vqTotal').textContent = q.total;
   const [fg, bg] = tagColor(q.topic_name);
   card.innerHTML = `
     <div class="qctr" style="margin-bottom:24px">
       <div class="ql">Nghĩa tiếng Việt</div>
-      <div class="qviet">${q.vietnamese}</div>
+      <div class="qviet">${q.vietnamese} <button class="speak-btn" onclick="speakZH('${esc(q.hanzi)}')" title="Nghe phát âm">🔊</button></div>
       <span class="qtag" style="color:${fg};background:${bg}">${q.topic_name}</span>
+      <div id="vqErrBadge" style="min-height:20px"></div>
     </div>
     <div class="opts" id="vqOpts">
       ${q.options.map(o => `
@@ -88,6 +89,7 @@ async function loadVQ() {
       <button class="btn-primary" id="vqNextBtn">Câu tiếp →</button>
     </div>
   `;
+  loadErrorBadge(q.hanzi, 'vqErrBadge');
   // Bind next button AFTER render
   document.getElementById('vqNextBtn').onclick = () => nextVQ(q.id);
 }
@@ -97,8 +99,17 @@ function checkVQ(btn, correct, hanzi, pinyin, ex, expy, exvn) {
     b.disabled = true;
     if (b.querySelector('.opt-hz').textContent === hanzi) b.classList.add('correct');
   });
-  if (correct) { VQ.right++; VQ.streak++; VQ.maxStreak = Math.max(VQ.maxStreak, VQ.streak); btn.classList.add('correct'); }
-  else { VQ.wrong++; VQ.streak = 0; btn.classList.add('wrong'); }
+
+  if (correct) {
+    VQ.right++; VQ.streak++; VQ.maxStreak = Math.max(VQ.maxStreak, VQ.streak);
+    btn.classList.add('correct');
+    _saveStreakIfBetter('vq');
+  } else {
+    VQ.wrong++; VQ.streak = 0;
+    btn.classList.add('wrong');
+    if (vqCurrentQ) recordError(vqCurrentQ.hanzi, 'vocab');
+  }
+
   VQ.done++;
   updateScoreUI('vq');
   document.getElementById('vqReveal').innerHTML = `<div class="reveal ${correct ? 'ok-rv' : 'bad-rv'}">${revealHtml(correct, hanzi, pinyin, ex, expy, exvn)}</div>`;
@@ -119,6 +130,7 @@ async function loadTQ() {
   if (tid) params.set('topic_id', tid);
   const q = await api('/api/quiz/vocab?' + params);
   if (q.error) { card.innerHTML = emptyHtml('Không có từ vựng nào.'); return; }
+  tqCurrentQ = q;
   TQ.total = q.total;
   document.getElementById('tqTotal').textContent = q.total;
   const [fg, bg] = tagColor(q.topic_name);
@@ -166,8 +178,13 @@ function checkTQ(answer, pinyin, ex, expy, exvn, qId) {
   inp.classList.add(ok ? 'ok' : 'bad'); inp.disabled = true;
   document.getElementById('tqCheckBtn').disabled = true;
   document.getElementById('tqHintBtn').disabled = true;
-  if (ok) { TQ.right++; TQ.streak++; TQ.maxStreak = Math.max(TQ.maxStreak, TQ.streak); }
-  else { TQ.wrong++; TQ.streak = 0; }
+  if (ok) {
+    TQ.right++; TQ.streak++; TQ.maxStreak = Math.max(TQ.maxStreak, TQ.streak);
+    _saveStreakIfBetter('tq');
+  } else {
+    TQ.wrong++; TQ.streak = 0;
+    if (tqCurrentQ) recordError(tqCurrentQ.hanzi, 'type');
+  }
   TQ.done++;
   updateScoreUI('tq');
   const showNext = TQ.done < TQ.total;
@@ -187,6 +204,8 @@ function resetTQ() { resetState('tq'); loadTQ(); }
 // ══ Sentence quiz ════════════════════════════════════════════════════════════
 let sqMode = 'arrange';
 let sqCurrentQ = null; // lưu data câu hiện tại, tránh truyền qua onclick
+let vqCurrentQ = null;
+let tqCurrentQ = null;
 
 async function loadSQ() {
   const card = document.getElementById('sqCard');
@@ -341,8 +360,13 @@ function checkSQType() {
 
 // ── Shared finish ─────────────────────────────────────────────────────────────
 function _finishSQ(ok) {
-  if (ok) { SQ.right++; SQ.streak++; SQ.maxStreak = Math.max(SQ.maxStreak, SQ.streak); }
-  else { SQ.wrong++; SQ.streak = 0; }
+  if (ok) {
+    SQ.right++; SQ.streak++; SQ.maxStreak = Math.max(SQ.maxStreak, SQ.streak);
+    _saveStreakIfBetter('sq');
+  } else {
+    SQ.wrong++; SQ.streak = 0;
+    if (sqCurrentQ) recordError(sqCurrentQ.hanzi, 'sent');
+  }
   SQ.done++;
   updateScoreUI('sq');
 
@@ -359,3 +383,33 @@ function _finishSQ(ok) {
 }
 
 function resetSQ() { resetState('sq'); sqCurrentQ = null; loadSQ(); }
+
+// Lưu streak ngay khi có streak mới tốt hơn, không cần chờ hết lượt
+function _saveStreakIfBetter(mode) {
+  const s = { vq: VQ, tq: TQ, sq: SQ }[mode];
+  if (s.streak > 0 && s.streak >= s.maxStreak) {
+    const topicSelId = { vq: 'vqTopic', tq: 'tqTopic', sq: 'sqTopic' }[mode];
+    const typeMap = { vq: 'vocab', tq: 'type', sq: 'sent' };
+    const topicId = document.getElementById(topicSelId).value || null;
+    api('/api/scores', 'POST', {
+      streak: s.streak,
+      topic_id: topicId,
+      quiz_type: typeMap[mode]
+    });
+  }
+}
+
+// Ghi lỗi khi trả lời sai
+function recordError(wordRef, quizType) {
+  api('/api/errors', 'POST', { word_ref: wordRef, quiz_type: quizType });
+}
+
+// Lấy và hiển thị số lần sai vào element có id errorBadge
+async function loadErrorBadge(wordRef, badgeId) {
+  const data = await api(`/api/errors/${encodeURIComponent(wordRef)}`);
+  const el = document.getElementById(badgeId);
+  if (!el) return;
+  if (data.total > 0) {
+    el.innerHTML = `<span class="error-badge">⚠ Đã sai ${data.total} lần</span>`;
+  }
+}

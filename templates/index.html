@@ -7,9 +7,10 @@
   <title>汉语学习 · Học Tiếng Trung</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link
-    href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap"
-    rel="stylesheet">
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&family=ZCOOL+XiaoWei&family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap"
+    rel="stylesheet" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
 </head>
 
 <body>
@@ -65,6 +66,9 @@
         </button>
         <button class="sb-btn" data-page="leaderboard" onclick="switchPage('leaderboard',this)">
           <span class="sb-icon">🏆</span><span class="sb-label">Bảng xếp hạng</span>
+        </button>
+        <button class="sb-btn" data-page="writing" onclick="switchPage('writing',this)">
+          <span class="sb-icon">✏️</span><span class="sb-label">Luyện viết</span>
         </button>
         <button class="sb-btn admin-only hidden" data-page="admin" onclick="switchPage('admin',this)">
           <span class="sb-icon">⚙️</span><span class="sb-label">Quản lý</span>
@@ -202,6 +206,7 @@
               <button class="btn-ghost" onclick="openImportSent()">📥 Import Excel</button>
             </div>
             <div id="sList"></div>
+            <div id="sPager" class="pager"></div>
           </div>
 
           <div id="tab-tt" class="tab-pane">
@@ -239,6 +244,27 @@
             </select>
           </div>
           <div id="lbList"></div>
+        </div>
+
+        <!-- PAGE: LUYỆN VIẾT -->
+        <div id="page-writing" class="page">
+          <div class="ph">
+            <h1>✏️ Luyện viết chữ Hán</h1>
+            <p>Viết theo nét, đúng thứ tự từng nét bút</p>
+          </div>
+          <div class="qbar">
+            <select class="sel" id="wrTopic" onchange="resetWR()">
+              <option value="">Tất cả chủ đề</option>
+            </select>
+            <button class="chip-btn" onclick="resetWR()">🔄 Từ mới</button>
+            <div class="score-row">
+              <span class="chip g">✓ <strong id="wrRight">0</strong></span>
+              <span class="chip r">✗ <strong id="wrWrong">0</strong></span>
+            </div>
+          </div>
+          <div class="qcard" id="wrCard">
+            <div class="qload">Đang tải...</div>
+          </div>
         </div>
 
         <!-- PAGE: ADMIN -->
@@ -525,6 +551,7 @@
   <script src="/static/js/manage.js"></script>
   <script src="/static/js/leaderboard.js"></script>
   <script src="/static/js/main.js"></script>
+  <script src="/static/js/writing.js"></script>
 </body>
 
 </html>

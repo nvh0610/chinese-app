@@ -119,3 +119,32 @@ def leaderboard():
     """, params).fetchall()
     db.close()
     return jsonify([dict(r) for r in rows])
+
+@quiz_bp.route('/api/errors', methods=['POST'])
+@require_login
+def record_error():
+    u = session['user']
+    d = request.json
+    db = get_db()
+    db.execute("""
+        INSERT INTO word_errors (user_id, word_ref, quiz_type, error_count)
+        VALUES (?,?,?,1)
+        ON CONFLICT(user_id, word_ref, quiz_type)
+        DO UPDATE SET error_count = error_count + 1
+    """, (u['id'], d['word_ref'], d['quiz_type']))
+    db.commit()
+    db.close()
+    return jsonify({'success': True})
+
+@quiz_bp.route('/api/errors/<word_ref>')
+@require_login
+def get_error(word_ref):
+    u = session['user']
+    db = get_db()
+    rows = db.execute(
+        "SELECT quiz_type, error_count FROM word_errors WHERE user_id=? AND word_ref=?",
+        (u['id'], word_ref)
+    ).fetchall()
+    db.close()
+    total = sum(r['error_count'] for r in rows)
+    return jsonify({'total': total, 'detail': [dict(r) for r in rows]})

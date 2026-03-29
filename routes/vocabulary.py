@@ -135,7 +135,14 @@ def delete_vocabulary(vid):
 def get_sentences():
     u = session['user']
     tid = request.args.get('topic_id')
-    return jsonify(sent_query(u, tid))
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 20))
+
+    rows = sent_query(u, tid)          # lấy tất cả như cũ
+    total = len(rows)
+    start = (page - 1) * per_page
+    paged = rows[start: start + per_page]
+    return jsonify({'items': paged, 'total': total, 'page': page})
 
 @vocab_bp.route('/api/sentences', methods=['POST'])
 @require_login

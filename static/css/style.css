@@ -38,7 +38,7 @@
   --shadow: 0 1px 3px rgba(0, 0, 0, .07), 0 4px 16px rgba(0, 0, 0, .05);
   --shadow-lg: 0 4px 6px rgba(0, 0, 0, .07), 0 16px 48px rgba(0, 0, 0, .14);
   --f: 'Be Vietnam Pro', sans-serif;
-  --fz: 'Noto Serif SC', serif;
+  --fz: 'Microsoft JhengHei', 'Microsoft YaHei', 'ZCOOL XiaoWei', 'Noto Sans SC', sans-serif;
   --ease: cubic-bezier(.4, 0, .2, 1);
 }
 
@@ -1868,4 +1868,32 @@ body {
   .sb-toggle {
     display: none;
   }
+}
+
+.speak-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 2px 6px;
+  border-radius: var(--r-xs);
+  transition: .15s;
+  vertical-align: middle;
+  opacity: .7;
+}
+
+.speak-btn:hover {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+.error-badge {
+  display: inline-block;
+  background: var(--c-ora-s);
+  color: var(--c-ora);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid #fed7aa;
 }
