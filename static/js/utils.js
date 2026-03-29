@@ -104,33 +104,57 @@ document.addEventListener('click', e => {
   });
 });
 
-// ══ Text-to-Speech ════════════════════════════════════════════════════════════
 function speakZH(text, gender = 'female') {
   if (!text || !window.speechSynthesis) return;
   window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = 'zh-CN';
-  utter.rate = 0.85;
-  utter.pitch = gender === 'female' ? 1.2 : 0.7;
 
-  const voices = window.speechSynthesis.getVoices();
-  const zhVoices = voices.filter(v => v.lang.startsWith('zh'));
-  if (zhVoices.length) {
-    const preferred = zhVoices.find(v =>
-      gender === 'female'
-        ? /female|woman|ting|meijia|li|hanhan|xiaoxiao/i.test(v.name)
-        : /male|man|kangkang|zhiyu|yunyang/i.test(v.name)
+  const trySpeak = () => {
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = gender === 'female' ? 'zh-CN' : 'zh-TW';
+    utter.rate = gender === 'female' ? 0.8 : 0.75;
+    utter.pitch = gender === 'female' ? 1.4 : 0.5;
+
+    const voices = window.speechSynthesis.getVoices();
+    const zhVoices = voices.filter(v =>
+      v.lang.startsWith('zh') || v.lang.startsWith('cmn')
     );
-    utter.voice = preferred || zhVoices[0];
+
+    if (zhVoices.length) {
+      // Tìm giọng khớp gender
+      const femaleKeywords = /female|woman|ting|meijia|li\b|hanhan|xiaoxiao|huihui|yaoyao/i;
+      const maleKeywords = /male|man|kangkang|zhiyu|yunyang|xiaochen|yunjian/i;
+
+      const preferred = zhVoices.find(v =>
+        gender === 'female' ? femaleKeywords.test(v.name) : maleKeywords.test(v.name)
+      );
+
+      // Nếu không tìm được đúng gender, dùng giọng index khác nhau
+      if (preferred) {
+        utter.voice = preferred;
+      } else if (zhVoices.length >= 2) {
+        utter.voice = gender === 'female' ? zhVoices[0] : zhVoices[1];
+      } else {
+        utter.voice = zhVoices[0];
+        // Pitch/rate đã đủ khác biệt để phân biệt
+      }
+    }
+
+    window.speechSynthesis.speak(utter);
+  };
+
+  // Voices có thể chưa load xong
+  if (window.speechSynthesis.getVoices().length) {
+    trySpeak();
+  } else {
+    window.speechSynthesis.onvoiceschanged = () => { trySpeak(); };
   }
-  window.speechSynthesis.speak(utter);
 }
 
 // Nút loa cạnh chữ Hán — dùng ở mọi nơi
 function speakBtn(hanzi, size = 16) {
   return `
-    <button class="speak-btn-f" onclick="speakZH('${esc(hanzi)}','female')" title="Giọng nữ">🔊</button>
-    <button class="speak-btn-m" onclick="speakZH('${esc(hanzi)}','male')"   title="Giọng nam">🔉</button>
+    <button class="speak-btn-f" onclick="speakZH('${esc(hanzi)}','female')" title="Giọng nữ" style="font-size:${size}px">🔊</button>
+    <button class="speak-btn-m" onclick="speakZH('${esc(hanzi)}','male')"   title="Giọng nam" style="font-size:${size}px">🔉</button>
   `;
 }
 

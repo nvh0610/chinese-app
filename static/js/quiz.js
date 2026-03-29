@@ -1,4 +1,6 @@
 // ══ Quiz State ══════════════════════════════════════════════════════════════
+let tqMode = 'read'; // 'read' | 'listen'
+let vqMode = 'viet';
 const VQ = { exclude: [], right: 0, wrong: 0, done: 0, total: 0, streak: 0, maxStreak: 0, finished: false };
 const TQ = { exclude: [], right: 0, wrong: 0, done: 0, total: 0, streak: 0, maxStreak: 0, finished: false };
 const SQ = { exclude: [], right: 0, wrong: 0, done: 0, total: 0, streak: 0, maxStreak: 0, finished: false, answer: [], correct: '', answered: false };
@@ -24,6 +26,27 @@ function checkFinished(mode) {
     // api('/api/scores', 'POST', { streak: s.maxStreak, topic_id: topicId, quiz_type: typeMap[mode] });
     setTimeout(() => showResult(mode), 700);
   }
+}
+
+function setTQMode(mode, btn) {
+  tqMode = mode;
+  document.querySelectorAll('#tqModeRead, #tqModeListen').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  resetTQ();
+}
+
+function setSQModeBar(mode, btn) {
+  sqMode = mode;
+  document.querySelectorAll('#sqModeArrangeBar,#sqModeTypeBar').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  resetSQ();
+}
+
+function setVQMode(mode, btn) {
+  vqMode = mode;
+  document.querySelectorAll('#vqModeViet,#vqModeHan').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  resetVQ();
 }
 
 function showResult(mode) {
@@ -70,36 +93,70 @@ async function loadVQ() {
   VQ.total = q.total;
   document.getElementById('vqTotal').textContent = q.total;
   const [fg, bg] = tagColor(q.topic_name);
-  card.innerHTML = `
-    <div class="qctr" style="margin-bottom:24px">
-      <div class="ql">Nghĩa tiếng Việt</div>
-      <div class="qviet">${q.vietnamese}</div>
-      <div style="margin-top:6px">
-        <span class="qtag" style="color:${fg};background:${bg};margin:0">${q.topic_name}</span>
+
+  if (vqMode === 'viet') {
+    card.innerHTML = `
+      <div class="qctr" style="margin-bottom:24px">
+        <div class="ql">Nghĩa tiếng Việt — chọn chữ Hán đúng</div>
+        <div class="qviet">${q.vietnamese}</div>
+        <div style="margin-top:6px">
+          <span class="qtag" style="color:${fg};background:${bg};margin:0">${q.topic_name}</span>
+        </div>
+        <div id="vqErrBadge" style="min-height:20px;margin-top:4px"></div>
       </div>
-      <div id="vqErrBadge" style="min-height:20px"></div>
-    </div>
-    <div class="opts" id="vqOpts">
-      ${q.options.map(o => `
-        <button class="opt" onclick="checkVQ(this,${o.correct},'${esc(q.hanzi)}','${esc(q.pinyin)}','${esc(q.example_sentence)}','${esc(q.example_pinyin)}','${esc(q.example_vietnamese)}')">
-          <span class="opt-hz">${o.hanzi}</span>
-          <span class="opt-py">${o.pinyin}</span>
-        </button>`).join('')}
-    </div>
-    <div id="vqReveal"></div>
-    <div class="qacts" id="vqNav" style="display:none">
-      <button class="btn-primary" id="vqNextBtn">Câu tiếp →</button>
-    </div>
-  `;
+      <div class="opts" id="vqOpts">
+        ${q.options.map(o => `
+          <button class="opt" data-correct="${o.correct}"
+            onclick="checkVQ(this,${o.correct},'${esc(q.hanzi)}','${esc(q.pinyin)}','${esc(q.example_sentence)}','${esc(q.example_pinyin)}','${esc(q.example_vietnamese)}')">
+            <span class="opt-hz">${o.hanzi}</span>
+            <span class="opt-py">${o.pinyin}</span>
+          </button>`).join('')}
+      </div>
+      <div id="vqReveal"></div>
+      <div class="qacts" id="vqNav" style="display:none">
+        <button class="btn-primary" id="vqNextBtn">Câu tiếp →</button>
+      </div>
+    `;
+  } else {
+    card.innerHTML = `
+      <div class="qctr" style="margin-bottom:24px">
+        <div class="ql">Chữ Hán — chọn nghĩa tiếng Việt đúng</div>
+        <div style="font-family:var(--fz);font-size:64px;font-weight:900;color:var(--c-ink);line-height:1;margin-bottom:4px">${q.hanzi}</div>
+        <div style="font-style:italic;color:var(--c-blue);font-size:16px;margin-bottom:6px">${q.pinyin}</div>
+        <div style="display:flex;justify-content:center;gap:6px;margin-bottom:4px">
+          <span class="qtag" style="color:${fg};background:${bg};margin:0">${q.topic_name}</span>
+          ${speakBtn(q.hanzi, 18)}
+        </div>
+        <div id="vqErrBadge" style="min-height:20px;margin-top:4px"></div>
+      </div>
+      <div class="opts" id="vqOpts">
+        ${q.options.map(o => `
+          <button class="opt" data-correct="${o.correct}"
+            onclick="checkVQ(this,${o.correct},'${esc(q.hanzi)}','${esc(q.pinyin)}','${esc(q.example_sentence)}','${esc(q.example_pinyin)}','${esc(q.example_vietnamese)}')">
+            <span style="font-size:15px;font-weight:600;display:block;padding:4px 0;color:var(--c-ink)">${o.vietnamese}</span>
+          </button>`).join('')}
+      </div>
+      <div id="vqReveal"></div>
+      <div class="qacts" id="vqNav" style="display:none">
+        <button class="btn-primary" id="vqNextBtn">Câu tiếp →</button>
+      </div>
+    `;
+  }
+
   loadErrorBadge(q.hanzi, 'vqErrBadge');
-  // Bind next button AFTER render
   document.getElementById('vqNextBtn').onclick = () => nextVQ(q.id);
 }
-
 function checkVQ(btn, correct, hanzi, pinyin, ex, expy, exvn) {
   document.querySelectorAll('#vqOpts .opt').forEach(b => {
     b.disabled = true;
-    if (b.querySelector('.opt-hz').textContent === hanzi) b.classList.add('correct');
+    if (vqMode === 'viet') {
+      // Mode viet: tìm theo opt-hz
+      const hz = b.querySelector('.opt-hz');
+      if (hz && hz.textContent === hanzi) b.classList.add('correct');
+    } else {
+      // Mode han: tìm theo data-correct attribute
+      if (b.dataset.correct === 'true') b.classList.add('correct');
+    }
   });
 
   if (correct) {
@@ -138,9 +195,21 @@ async function loadTQ() {
   const [fg, bg] = tagColor(q.topic_name);
   card.innerHTML = `
     <div class="qctr" style="margin-bottom:20px">
-      <div class="ql">Nhập chữ Hán cho nghĩa sau</div>
-      <div class="qviet">${q.vietnamese}</div>
-      <span class="qtag" style="color:${fg};background:${bg}">${q.topic_name}</span>
+      ${tqMode === 'read' ? `
+        <div class="ql">Nhập chữ Hán cho nghĩa sau</div>
+        <div class="qviet">${q.vietnamese}</div>
+        <span class="qtag" style="color:${fg};background:${bg}">${q.topic_name}</span>
+      ` : `
+        <div class="ql">Nghe rồi gõ chữ Hán</div>
+        <div style="display:flex;justify-content:center;gap:10px;margin:14px 0">
+          <button class="speak-btn-f" onclick="speakZH('${esc(q.hanzi)}','female')" title="Giọng nữ"
+            style="font-size:32px;width:64px;height:64px;border:2px solid var(--c-pink-s);border-radius:var(--r);background:var(--c-pink-s)">🔊</button>
+          <button class="speak-btn-m" onclick="speakZH('${esc(q.hanzi)}','male')" title="Giọng nam"
+            style="font-size:32px;width:64px;height:64px;border:2px solid var(--c-blue-s);border-radius:var(--r);background:var(--c-blue-s)">🔉</button>
+        </div>
+        <span class="qtag" style="color:${fg};background:${bg}">${q.topic_name}</span>
+        <div style="font-size:12px;color:var(--c-ink3);margin-top:6px">Nhấn loa để nghe, sau đó gõ chữ Hán</div>
+      `}
     </div>
     <div class="type-wrap">
       <div class="py-toggle">
@@ -166,6 +235,7 @@ async function loadTQ() {
   inp.addEventListener('keydown', e => {
     if (e.key === 'Enter') checkTQ(q.hanzi, q.pinyin, q.example_sentence, q.example_pinyin, q.example_vietnamese, q.id);
   });
+  if (tqMode === 'listen') setTimeout(() => speakZH(q.hanzi, 'female'), 500);
 }
 
 function togglePinyinVis() {
@@ -233,14 +303,6 @@ async function loadSQ() {
 
   card.innerHTML = `
     <div class="qctr" style="margin-bottom:18px">
-      <div class="ql">Chế độ luyện tập</div>
-      <div class="sq-mode-btns">
-        <button class="sq-mode-btn ${sqMode === 'arrange' ? 'active' : ''}" id="sqModeArrange" onclick="setSQMode('arrange')">🔀 Sắp xếp</button>
-        <button class="sq-mode-btn ${sqMode === 'type' ? 'active' : ''}"    id="sqModeType"    onclick="setSQMode('type')">⌨️ Tự đánh</button>
-      </div>
-    </div>
-
-    <div class="qctr" style="margin-bottom:18px">
       <div class="sq-viet">${q.vietnamese}</div>
       <div class="py-toggle" style="display:inline-flex;margin-top:8px">
         <span style="font-size:13px;color:var(--c-blue);font-weight:600">Pinyin:</span>
@@ -258,10 +320,8 @@ async function loadSQ() {
 
 function setSQMode(mode) {
   sqMode = mode;
-  document.querySelectorAll('.sq-mode-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(mode === 'arrange' ? 'sqModeArrange' : 'sqModeType').classList.add('active');
   SQ.answer = []; SQ.answered = false;
-  document.getElementById('sqReveal').innerHTML = '';
+  if (document.getElementById('sqReveal')) document.getElementById('sqReveal').innerHTML = '';
   renderSQMode();
 }
 

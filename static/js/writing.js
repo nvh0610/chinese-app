@@ -18,7 +18,8 @@ async function loadWR() {
     if (q.error) { card.innerHTML = emptyHtml('Không có từ vựng nào.'); return; }
 
     // Chỉ lấy chữ đơn hoặc chữ đầu tiên để vẽ
-    const charToWrite = q.hanzi[0];
+    const charsToWrite = [...q.hanzi];
+    let wrCharIndex = 0;
     wrCurrentQ = q;
 
     const [fg, bg] = tagColor(q.topic_name);
@@ -42,7 +43,8 @@ async function loadWR() {
           <button class="btn-ghost" onclick="wrHint()">💡 Gợi ý nét</button>
           <button class="btn-ghost" id="wrOutlineBtn" onclick="wrToggleOutline()">👁 Ẩn nét mờ</button>
           <button class="btn-ghost" onclick="wrRetry()">🔄 Thử lại</button>
-          <button class="speak-btn" style="font-size:20px" onclick="speakZH('${esc(q.hanzi)}')" title="Nghe phát âm">🔊</button>
+          <button class="speak-btn-f" style="font-size:18px;border:1.5px solid var(--c-bdr);border-radius:var(--r-sm);padding:5px 8px" onclick="speakZH('${esc(q.hanzi)}','female')" title="Giọng nữ">🔊</button>
+          <button class="speak-btn-m" style="font-size:18px;border:1.5px solid var(--c-bdr);border-radius:var(--r-sm);padding:5px 8px" onclick="speakZH('${esc(q.hanzi)}','male')" title="Giọng nam">🔉</button>
         </div>
       </div>
 
@@ -61,39 +63,8 @@ async function loadWR() {
     // Khởi tạo HanziWriter
     if (wrWriter) { try { wrWriter = null; } catch (e) { } }
     wrCurrentStroke = 0;
-    wrWriter = HanziWriter.create('wrCanvas', charToWrite, {
-        width: 280,
-        height: 280,
-        padding: 20,
-        showOutline: wrOutlineVisible,       // theo toggle của user
-        strokeColor: '#1c1917',
-        outlineColor: '#e8e2d9',
-        drawingColor: '#dc2626',
-        drawingWidth: 4,
-        strokeAnimationSpeed: 1,
-        delayBetweenStrokes: 100,
-        showHintAfterMisses: 999,            // tắt auto hint, dùng manual
-        highlightOnComplete: true,
-        highlightColor: '#16a34a',
-        onMistake: () => {
-            document.getElementById('wrStatus').textContent = '✗ Nét chưa đúng, thử lại!';
-            document.getElementById('wrStatus').style.color = 'var(--c-red)';
-        },
-        onCorrectStroke: () => {
-            wrCurrentStroke++;                 // track nét hiện tại
-            document.getElementById('wrStatus').textContent = '✓ Nét đúng!';
-            document.getElementById('wrStatus').style.color = 'var(--c-grn)';
-        },
-        onComplete: () => {
-            wrRight++;
-            document.getElementById('wrRight').textContent = wrRight;
-            document.getElementById('wrStatus').innerHTML = '🎉 Hoàn thành!';
-            document.getElementById('wrStatus').style.color = 'var(--c-grn)';
-            document.getElementById('wrNextBtn').style.display = '';
-            speakZH(q.hanzi);
-        }
-    });
-    wrWriter.quiz();
+    wrCharIndex = 0;
+    _initWriterForChar(charsToWrite, 0, q);
 }
 
 function wrAnimateChar() {
@@ -111,58 +82,16 @@ function wrHint() {
 }
 
 function wrRetry() {
-    if (wrWriter) {
-        wrCurrentStroke = 0;
-        document.getElementById('wrStatus').textContent = '';
-        document.getElementById('wrNextBtn').style.display = 'none';
-        wrWriter.quiz();
-    }
+    document.getElementById('wrNextBtn').style.display = 'none';
+    if (wrCurrentQ) _initWriterForChar([...wrCurrentQ.hanzi], 0, wrCurrentQ);
 }
 
 function wrToggleOutline() {
     wrOutlineVisible = !wrOutlineVisible;
     const btn = document.getElementById('wrOutlineBtn');
-    btn.textContent = wrOutlineVisible ? '👁 Ẩn nét mờ' : '👁 Hiện nét mờ';
-    // Phải tạo lại writer vì HanziWriter không hỗ trợ update showOutline runtime
-    if (wrWriter && wrCurrentQ) {
-        const charToWrite = wrCurrentQ.hanzi[0];
-        // Xóa sạch SVG cũ trước khi tạo mới
-        const canvasEl = document.getElementById('wrCanvas');
-        canvasEl.innerHTML = '';
-        wrWriter = HanziWriter.create('wrCanvas', charToWrite, {
-            width: 280,
-            height: 280,
-            padding: 20,
-            showOutline: wrOutlineVisible,
-            strokeColor: '#1c1917',
-            outlineColor: '#e8e2d9',
-            drawingColor: '#dc2626',
-            drawingWidth: 4,
-            strokeAnimationSpeed: 1,
-            delayBetweenStrokes: 100,
-            showHintAfterMisses: 999,
-            highlightOnComplete: true,
-            highlightColor: '#16a34a',
-            onMistake: () => {
-                document.getElementById('wrStatus').textContent = '✗ Nét chưa đúng, thử lại!';
-                document.getElementById('wrStatus').style.color = 'var(--c-red)';
-            },
-            onCorrectStroke: () => {
-                wrCurrentStroke++;
-                document.getElementById('wrStatus').textContent = '✓ Nét đúng!';
-                document.getElementById('wrStatus').style.color = 'var(--c-grn)';
-            },
-            onComplete: () => {
-                wrRight++;
-                document.getElementById('wrRight').textContent = wrRight;
-                document.getElementById('wrStatus').innerHTML = '🎉 Hoàn thành!';
-                document.getElementById('wrStatus').style.color = 'var(--c-grn)';
-                document.getElementById('wrNextBtn').style.display = '';
-                speakZH(wrCurrentQ.hanzi);
-            }
-        });
-        wrCurrentStroke = 0;
-        wrWriter.quiz();
+    if (btn) btn.textContent = wrOutlineVisible ? '👁 Ẩn nét mờ' : '👁 Hiện nét mờ';
+    if (wrCurrentQ) {
+        _initWriterForChar([...wrCurrentQ.hanzi], 0, wrCurrentQ);
     }
 }
 
@@ -176,4 +105,64 @@ function resetWR() {
     document.getElementById('wrRight').textContent = '0';
     document.getElementById('wrWrong').textContent = '0';
     loadWR();
+}
+
+function _initWriterForChar(chars, idx, q) {
+    const canvasEl = document.getElementById('wrCanvas');
+    if (!canvasEl) return;
+    canvasEl.innerHTML = '';
+    wrCurrentStroke = 0;
+
+    const char = chars[idx];
+    const total = chars.length;
+
+    // Cập nhật tiêu đề chữ đang tập
+    const statusEl = document.getElementById('wrStatus');
+    if (statusEl) {
+        statusEl.textContent = total > 1 ? `Chữ ${idx + 1}/${total}: ${char}` : '';
+        statusEl.style.color = 'var(--c-ink3)';
+    }
+
+    wrWriter = HanziWriter.create('wrCanvas', char, {
+        width: 280,
+        height: 280,
+        padding: 20,
+        showOutline: wrOutlineVisible,
+        strokeColor: '#1c1917',
+        outlineColor: '#e8e2d9',
+        drawingColor: '#dc2626',
+        drawingWidth: 4,
+        strokeAnimationSpeed: 1,
+        delayBetweenStrokes: 100,
+        showHintAfterMisses: 999,
+        highlightOnComplete: true,
+        highlightColor: '#16a34a',
+        onMistake: () => {
+            const el = document.getElementById('wrStatus');
+            if (el) { el.textContent = '✗ Nét chưa đúng!'; el.style.color = 'var(--c-red)'; }
+        },
+        onCorrectStroke: () => {
+            wrCurrentStroke++;
+            const el = document.getElementById('wrStatus');
+            if (el) { el.textContent = '✓ Nét đúng!'; el.style.color = 'var(--c-grn)'; }
+        },
+        onComplete: () => {
+            speakZH(char, 'female');
+            if (idx + 1 < total) {
+                // Còn chữ tiếp theo trong cụm
+                const el = document.getElementById('wrStatus');
+                if (el) { el.textContent = `✅ Xong chữ ${idx + 1}! Tiếp theo: ${chars[idx + 1]}`; el.style.color = 'var(--c-grn)'; }
+                setTimeout(() => _initWriterForChar(chars, idx + 1, q), 1200);
+            } else {
+                // Hoàn thành cả cụm
+                wrRight++;
+                document.getElementById('wrRight').textContent = wrRight;
+                const el = document.getElementById('wrStatus');
+                if (el) { el.innerHTML = '🎉 Hoàn thành cả cụm!'; el.style.color = 'var(--c-grn)'; }
+                document.getElementById('wrNextBtn').style.display = '';
+                speakZH(q.hanzi, 'female');
+            }
+        }
+    });
+    wrWriter.quiz();
 }

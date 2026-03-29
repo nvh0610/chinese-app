@@ -64,11 +64,11 @@
         <button class="sb-btn" data-page="manage" onclick="switchPage('manage',this)">
           <span class="sb-icon">📚</span><span class="sb-label">Kho từ</span>
         </button>
-        <button class="sb-btn" data-page="leaderboard" onclick="switchPage('leaderboard',this)">
-          <span class="sb-icon">🏆</span><span class="sb-label">Bảng xếp hạng</span>
-        </button>
         <button class="sb-btn" data-page="writing" onclick="switchPage('writing',this)">
           <span class="sb-icon">✏️</span><span class="sb-label">Luyện viết</span>
+        </button>
+        <button class="sb-btn" data-page="leaderboard" onclick="switchPage('leaderboard',this)">
+          <span class="sb-icon">🏆</span><span class="sb-label">Bảng xếp hạng</span>
         </button>
         <button class="sb-btn admin-only hidden" data-page="admin" onclick="switchPage('admin',this)">
           <span class="sb-icon">⚙️</span><span class="sb-label">Quản lý</span>
@@ -99,7 +99,11 @@
               <option value="">Tất cả chủ đề</option>
             </select>
             <button class="chip-btn" onclick="resetVQ()">🔄 Reset</button>
-            <div id="ttsSwitcherVQ"></div>
+            <div style="display:flex;gap:4px">
+              <button class="sq-mode-btn active" id="vqModeViet" onclick="setVQMode('viet',this)">🇻🇳 Nghĩa →
+                Hán</button>
+              <button class="sq-mode-btn" id="vqModeHan" onclick="setVQMode('han',this)">🀄 Hán → Nghĩa</button>
+            </div>
             <div class="score-row">
               <span class="chip g">✓ <strong id="vqR">0</strong></span>
               <span class="chip r">✗ <strong id="vqW">0</strong></span>
@@ -118,15 +122,18 @@
         <!-- PAGE: TỰ ĐIỀN -->
         <div id="page-quiz-type" class="page">
           <div class="ph">
-            <h1>✍️ Tự điền chữ Hán</h1>
-            <p>Nhìn nghĩa tiếng Việt, tự nhập chữ Hán</p>
+            <h1>✍️ Gõ chữ Hán và nghe</h1>
+            <p>Nhìn nghĩa hoặc nghe âm thanh rồi gõ chữ Hán</p>
           </div>
           <div class="qbar">
             <select class="sel" id="tqTopic" onchange="resetTQ()">
               <option value="">Tất cả chủ đề</option>
             </select>
             <button class="chip-btn" onclick="resetTQ()">🔄 Reset</button>
-            <div id="ttsSwitcherTQ"></div>
+            <div style="display:flex;gap:4px">
+              <button class="sq-mode-btn active" id="tqModeRead" onclick="setTQMode('read',this)">👁 Nhìn nghĩa</button>
+              <button class="sq-mode-btn" id="tqModeListen" onclick="setTQMode('listen',this)">🔊 Nghe và gõ</button>
+            </div>
             <div class="score-row">
               <span class="chip g">✓ <strong id="tqR">0</strong></span>
               <span class="chip r">✗ <strong id="tqW">0</strong></span>
@@ -153,7 +160,11 @@
               <option value="">Tất cả chủ đề</option>
             </select>
             <button class="chip-btn" onclick="resetSQ()">🔄 Reset</button>
-            <div id="ttsSwitcherSQ"></div>
+            <div style="display:flex;gap:4px">
+              <button class="sq-mode-btn active" id="sqModeArrangeBar" onclick="setSQModeBar('arrange',this)">🔀 Sắp
+                xếp</button>
+              <button class="sq-mode-btn" id="sqModeTypeBar" onclick="setSQModeBar('type',this)">⌨️ Tự đánh</button>
+            </div>
             <div class="score-row">
               <span class="chip g">✓ <strong id="sqR">0</strong></span>
               <span class="chip r">✗ <strong id="sqW">0</strong></span>

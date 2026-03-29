@@ -45,8 +45,8 @@ def quiz_vocab():
     wrong = random.sample(others, min(3, len(others)))
     
     # 6. Đóng gói kết quả
-    opts = [{'hanzi':w['hanzi'],'pinyin':w['pinyin'],'correct':False} for w in wrong]
-    opts.append({'hanzi':chosen['hanzi'],'pinyin':chosen['pinyin'],'correct':True})
+    opts = [{'hanzi':w['hanzi'],'pinyin':w['pinyin'],'vietnamese':w['vietnamese'],'correct':False} for w in wrong]
+    opts.append({'hanzi':chosen['hanzi'],'pinyin':chosen['pinyin'],'vietnamese':chosen['vietnamese'],'correct':True})
     random.shuffle(opts)
     
     return jsonify({**chosen, 'options': opts, 'total': len(all_v)})
