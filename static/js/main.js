@@ -18,6 +18,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function showApp() {
   document.getElementById('loginGate').classList.add('hidden');
   document.getElementById('appShell').classList.remove('hidden');
+  // Render TTS switcher vào các quiz bar
+  // Xóa đoạn cũ nếu có, thay bằng:
+  ['ttsSwitcherVQ', 'ttsSwitcherTQ', 'ttsSwitcherSQ'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = `
+    <div style="display:flex;gap:4px">
+      <button class="speak-btn-f" style="border:1.5px solid var(--c-bdr);border-radius:var(--r-sm);padding:5px 10px;font-size:13px" onclick="speakZH('你好','female')" title="Giọng nữ">🔊 Nữ</button>
+      <button class="speak-btn-m" style="border:1.5px solid var(--c-bdr);border-radius:var(--r-sm);padding:5px 10px;font-size:13px" onclick="speakZH('你好','male')"   title="Giọng nam">🔉 Nam</button>
+    </div>
+  `;
+  });
   await loadAllTopics();
 
   // Admin nav
@@ -30,7 +41,7 @@ async function showApp() {
   sbUser.innerHTML = `<span style="font-size:15px">${window.CU.role === 'admin' ? '👑' : '👤'}</span><span class="sb-label" style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis">${window.CU.username}</span>`;
 
   await loadAllTopics();
-  loadVQ(); loadTQ(); loadSQ();
+  loadVQ(); loadTQ(); loadSQ(); loadWR();
   loadVList(); loadSList(); loadTList();
   loadLB();
   if (window.CU.role === 'admin') loadUList();

@@ -73,8 +73,10 @@ async function loadVQ() {
   card.innerHTML = `
     <div class="qctr" style="margin-bottom:24px">
       <div class="ql">Nghĩa tiếng Việt</div>
-      <div class="qviet">${q.vietnamese} <button class="speak-btn" onclick="speakZH('${esc(q.hanzi)}')" title="Nghe phát âm">🔊</button></div>
-      <span class="qtag" style="color:${fg};background:${bg}">${q.topic_name}</span>
+      <div class="qviet">${q.vietnamese}</div>
+      <div style="margin-top:6px">
+        <span class="qtag" style="color:${fg};background:${bg};margin:0">${q.topic_name}</span>
+      </div>
       <div id="vqErrBadge" style="min-height:20px"></div>
     </div>
     <div class="opts" id="vqOpts">
@@ -152,6 +154,10 @@ async function loadTQ() {
         <button class="btn-ghost" id="tqHintBtn">💡 Gợi ý chữ Hán</button>
       </div>
       <div id="tqReveal"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+      <button class="speak-btn-f" onclick="speakZH('${esc(q.hanzi)}','female')" title="Giọng nữ">🔊</button>
+      <button class="speak-btn-m" onclick="speakZH('${esc(q.hanzi)}','male')"   title="Giọng nam">🔉</button>
     </div>
   `;
   const inp = document.getElementById('tqInp');
@@ -374,7 +380,7 @@ function _finishSQ(ok) {
   document.getElementById('sqReveal').innerHTML = `
     <div class="reveal ${ok ? 'ok-rv' : 'bad-rv'}" style="margin-top:14px">
       <div class="rv-label ${ok ? 'ok' : 'bad'}">${ok ? '✓ Đúng rồi!' : '✗ Chưa đúng!'}</div>
-      ${!ok ? `<div style="margin-top:6px">Câu đúng: <span class="rv-hz">${SQ.correct}</span></div>` : ''}
+      ${!ok ? `<div style="margin-top:6px;display:flex;align-items:center;gap:8px">Câu đúng: <span class="rv-hz">${SQ.correct}</span>${speakBtn(SQ.correct, 16)}</div>` : `<div style="display:flex;align-items:center;gap:8px"><span class="rv-hz">${SQ.correct}</span>${speakBtn(SQ.correct, 16)}</div>`}
       ${showNext ? `<div class="qacts"><button class="btn-primary" id="sqNextBtn">Câu tiếp →</button></div>` : ''}
     </div>
   `;

@@ -37,22 +37,29 @@ async function loadVList(page = 1) {
   if (!items.length) { cont.innerHTML = emptyHtml('Chưa có từ vựng nào.'); document.getElementById('vPager').innerHTML = ''; return; }
   cont.innerHTML = items.map(v => `
     <div class="vitem">
-      <div class="vhz">${v.hanzi}</div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+        <div class="vhz">${v.hanzi}</div>
+      </div>
       <div class="vdetail">
         <span class="vtag ${v.scope}">${v.scope === 'public' ? '🌐 Công khai' : '🔒 Của tôi'}</span>
         ${topicTagHtml(v.topic_name)}
         <div class="vpinyin">${v.pinyin}</div>
         <div class="vviet">${v.vietnamese}</div>
         ${v.example_sentence ? `<div class="vex">
-          <div class="vex-hz">${v.example_sentence}</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <div class="vex-hz">${v.example_sentence}</div>
+          </div>
           <div class="vex-py">${v.example_pinyin || ''}</div>
           <div class="vex-vn">${v.example_vietnamese || ''}</div>
         </div>` : ''}
       </div>
-      ${canEdit(v) ? `<div class="vactions">
-        <button class="btn-icon" onclick='openVModal(${JSON.stringify(v)})'>✏️</button>
-        <button class="btn-icon del" onclick="confirmDel('vocab',${v.id})">🗑️</button>
-      </div>` : ''}
+      <div class="vactions">
+        ${speakBtn(v.hanzi, 14)}
+        ${canEdit(v) ? `
+          <button class="btn-icon" onclick='openVModal(${JSON.stringify(v)})'>✏️</button>
+          <button class="btn-icon del" onclick="confirmDel('vocab',${v.id})">🗑️</button>
+        ` : ''}
+      </div>
     </div>
   `).join('');
   document.getElementById('vPager').innerHTML = pagerHtml(page, data.total, 20, 'loadVList');
@@ -77,13 +84,18 @@ async function loadSList(page = 1) {
       <div class="sitem-d">
         <span class="vtag ${s.scope}">${s.scope === 'public' ? '🌐' : '🔒'}</span>
         ${topicTagHtml(s.topic_name)}
-        <div class="sitem-hz">${s.hanzi}</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="sitem-hz">${s.hanzi}</div>
+        </div>
         ${s.pinyin ? `<div style="font-style:italic;font-size:12px;color:var(--c-blue)">${s.pinyin}</div>` : ''}
         <div style="font-size:13px;color:var(--c-ink3);margin-top:4px">${s.vietnamese}</div>
       </div>
-      ${canEdit(s) ? `<div class="vactions">
-        <button class="btn-icon del" onclick="confirmDel('sent',${s.id})">🗑️</button>
-      </div>` : ''}
+      <div class="vactions">
+        ${speakBtn(s.hanzi, 14)}
+        ${canEdit(s) ? `
+          <button class="btn-icon del" onclick="confirmDel('sent',${s.id})">🗑️</button>
+        ` : ''}
+      </div>
     </div>
   `).join('');
   document.getElementById('sPager').innerHTML = pagerHtml(sPage, total, 20, 'loadSList');

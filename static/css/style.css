@@ -1870,16 +1870,35 @@ body {
   }
 }
 
-.speak-btn {
+.speak-btn-f,
+.speak-btn-m {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 16px;
-  padding: 2px 6px;
+  font-size: 15px;
+  padding: 3px 5px;
   border-radius: var(--r-xs);
   transition: .15s;
   vertical-align: middle;
-  opacity: .7;
+  line-height: 1;
+}
+
+.speak-btn-f {
+  color: #db2777;
+}
+
+.speak-btn-f:hover {
+  background: var(--c-pink-s);
+  transform: scale(1.2);
+}
+
+.speak-btn-m {
+  color: #2563eb;
+}
+
+.speak-btn-m:hover {
+  background: var(--c-blue-s);
+  transform: scale(1.2);
 }
 
 .speak-btn:hover {
@@ -1896,4 +1915,34 @@ body {
   padding: 3px 10px;
   border-radius: 20px;
   border: 1px solid #fed7aa;
+}
+
+/* TTS Gender switcher */
+.tts-switcher {
+  display: flex;
+  gap: 4px;
+}
+
+.tts-btn {
+  background: var(--c-sur);
+  border: 1.5px solid var(--c-bdr);
+  border-radius: var(--r-sm);
+  padding: 6px 12px;
+  font-family: var(--f);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-ink3);
+  cursor: pointer;
+  transition: .15s;
+}
+
+.tts-btn:hover {
+  border-color: var(--c-blue);
+  color: var(--c-blue);
+}
+
+.tts-btn.active {
+  background: var(--c-blue);
+  color: #fff;
+  border-color: var(--c-blue);
 }

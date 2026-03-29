@@ -79,14 +79,18 @@ function pagerHtml(page, total, perPage, onPageFn) {
 function revealHtml(ok, hanzi, pinyin, ex, expy, exvn, showAns = true) {
   return `
     <div class="rv-label ${ok ? 'ok' : 'bad'}">${ok ? '✓ Đúng rồi!' : '✗ Chưa đúng!'}</div>
-    ${(!ok && showAns) ? `<div style="margin-bottom:4px">Đáp án: 
-  <span class="rv-hz">${hanzi}</span>
-  <button class="speak-btn" onclick="speakZH('${hanzi}')" title="Nghe phát âm">🔊</button>
-</div>` : (ok ? `<span class="rv-hz">${hanzi}</span>
-  <button class="speak-btn" onclick="speakZH('${hanzi}')" title="Nghe phát âm">🔊</button>` : '')}
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
+      ${(!ok && showAns)
+      ? `<div>Đáp án: <span class="rv-hz">${hanzi}</span></div>`
+      : `<span class="rv-hz">${hanzi}</span>`}
+      ${speakBtn(hanzi, 18)}
+    </div>
     <div class="rv-py">${pinyin || ''}</div>
     ${ex ? `<div class="rv-ex">
-      <div class="rv-ex-hz">${ex}</div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="rv-ex-hz">${ex}</div>
+        ${speakBtn(ex, 14)}
+      </div>
       <div class="rv-ex-py">${expy || ''}</div>
       <div class="rv-ex-vn">${exvn || ''}</div>
     </div>` : ''}
@@ -101,19 +105,33 @@ document.addEventListener('click', e => {
 });
 
 // ══ Text-to-Speech ════════════════════════════════════════════════════════════
-function speakZH(text) {
+function speakZH(text, gender = 'female') {
   if (!text || !window.speechSynthesis) return;
-  window.speechSynthesis.cancel(); // dừng nếu đang đọc
+  window.speechSynthesis.cancel();
   const utter = new SpeechSynthesisUtterance(text);
   utter.lang = 'zh-CN';
   utter.rate = 0.85;
-  utter.pitch = 1;
-  // Ưu tiên giọng Chinese nếu có
+  utter.pitch = gender === 'female' ? 1.2 : 0.7;
+
   const voices = window.speechSynthesis.getVoices();
-  const zhVoice = voices.find(v => v.lang.startsWith('zh'));
-  if (zhVoice) utter.voice = zhVoice;
+  const zhVoices = voices.filter(v => v.lang.startsWith('zh'));
+  if (zhVoices.length) {
+    const preferred = zhVoices.find(v =>
+      gender === 'female'
+        ? /female|woman|ting|meijia|li|hanhan|xiaoxiao/i.test(v.name)
+        : /male|man|kangkang|zhiyu|yunyang/i.test(v.name)
+    );
+    utter.voice = preferred || zhVoices[0];
+  }
   window.speechSynthesis.speak(utter);
 }
 
-// Cần load voices trước (một số browser lazy-load)
+// Nút loa cạnh chữ Hán — dùng ở mọi nơi
+function speakBtn(hanzi, size = 16) {
+  return `
+    <button class="speak-btn-f" onclick="speakZH('${esc(hanzi)}','female')" title="Giọng nữ">🔊</button>
+    <button class="speak-btn-m" onclick="speakZH('${esc(hanzi)}','male')"   title="Giọng nam">🔉</button>
+  `;
+}
+
 window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
