@@ -1821,89 +1821,235 @@ body {
 }
 
 /* ══ Responsive ═════════════════════════════════════════════════════════════ */
-@media (max-width: 700px) {
+@media (max-width: 768px) {
+
+  /* Sidebar ẩn hoàn toàn, thay bằng bottom nav */
   .sidebar {
-    width: 60px;
+    width: 100% !important;
+    height: 56px;
+    min-height: unset;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    flex-direction: row;
+    border-right: none;
+    border-top: 1px solid var(--c-bdr);
+    z-index: 100;
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, .08);
   }
 
-  .sidebar .sb-label {
-    opacity: 0;
-    pointer-events: none;
+  .sidebar.collapsed {
+    width: 100% !important;
+    height: 56px;
   }
 
-  .sidebar .sb-text {
-    opacity: 0;
-    pointer-events: none;
+  .sb-logo,
+  .sb-footer,
+  .sb-toggle {
+    display: none !important;
   }
 
-  .sidebar .sb-user {
+  .sb-text {
     display: none;
   }
 
-  .sidebar #sbArrow {
-    transform: rotate(180deg);
-    display: inline-block;
+  .sb-nav {
+    flex-direction: row;
+    padding: 0;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    align-items: stretch;
+    width: 100%;
   }
 
+  .sb-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sb-btn {
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 4px;
+    border-radius: 0;
+    flex: 1;
+    min-width: 56px;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--c-ink3);
+  }
+
+  .sb-btn.active {
+    background: none;
+    color: var(--c-red);
+    border-top: 2px solid var(--c-red);
+  }
+
+  .sb-btn.active .sb-icon {
+    color: var(--c-red);
+  }
+
+  .sb-icon {
+    font-size: 18px;
+    width: auto;
+  }
+
+  .sb-label {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    font-size: 9px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 52px;
+  }
+
+  /* Content không bị che bởi sidebar */
   .content {
-    margin-left: 60px;
+    margin-left: 0 !important;
+    padding-bottom: 56px;
+    /* space cho bottom nav */
   }
 
   .main {
-    padding: 20px 16px 32px;
+    padding: 16px 14px 24px;
   }
 
+  /* Quiz card */
   .qcard {
-    padding: 22px 16px;
+    padding: 20px 14px;
   }
 
   .opts {
     grid-template-columns: 1fr 1fr;
+    gap: 8px;
   }
 
+  .opt-hz {
+    font-size: 22px;
+  }
+
+  /* Qbar wrap xuống dòng gọn */
+  .qbar {
+    gap: 6px;
+  }
+
+  .score-row {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .sq-mode-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  /* Form */
   .frow {
     grid-template-columns: 1fr;
   }
 
-  .sb-toggle {
+  .mbox {
+    padding: 20px 16px;
+  }
+
+  .mbox.small {
+    max-width: 100%;
+  }
+
+  /* Writing */
+  .qcard>div[style*="display:flex"] {
+    flex-direction: column !important;
+  }
+
+  /* Sidebar footer user info */
+  .sb-user {
     display: none;
+  }
+
+  /* Page header */
+  .ph h1 {
+    font-size: 20px;
+  }
+
+  .ph p {
+    font-size: 13px;
+  }
+
+  /* Leaderboard */
+  .lb-filters {
+    gap: 6px;
+  }
+
+  .lb-filters .sel {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+  }
+
+  /* Topic grid */
+  .tgrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Hide loa text nếu có */
+  .speak-btn-f,
+  .speak-btn-m {
+    font-size: 13px !important;
+    padding: 3px 5px;
   }
 }
 
-.speak-btn-f,
-.speak-btn-m {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 15px;
-  padding: 3px 5px;
-  border-radius: var(--r-xs);
-  transition: .15s;
-  vertical-align: middle;
-  line-height: 1;
+@media (max-width: 400px) {
+  .opts {
+    grid-template-columns: 1fr;
+  }
+
+  .tgrid {
+    grid-template-columns: 1fr;
+  }
+
+  .sq-mode-btn {
+    padding: 5px 8px;
+    font-size: 11px;
+  }
 }
 
 .speak-btn-f {
+  background: var(--c-pink-s);
+  border: 1.5px solid #fbcfe8;
+  border-radius: var(--r-xs);
+  cursor: pointer;
+  padding: 3px 6px;
+  transition: .15s;
+  vertical-align: middle;
+  line-height: 1;
   color: #db2777;
 }
 
 .speak-btn-f:hover {
-  background: var(--c-pink-s);
-  transform: scale(1.2);
+  background: #fbcfe8;
+  transform: scale(1.15);
 }
 
 .speak-btn-m {
+  background: var(--c-blue-s);
+  border: 1.5px solid #bfdbfe;
+  border-radius: var(--r-xs);
+  cursor: pointer;
+  padding: 3px 6px;
+  transition: .15s;
+  vertical-align: middle;
+  line-height: 1;
   color: #2563eb;
 }
 
 .speak-btn-m:hover {
-  background: var(--c-blue-s);
-  transform: scale(1.2);
-}
-
-.speak-btn:hover {
-  opacity: 1;
-  transform: scale(1.2);
+  background: #bfdbfe;
+  transform: scale(1.15);
 }
 
 .error-badge {

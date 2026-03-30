@@ -4,6 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <title>汉语学习 · Học Tiếng Trung</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link
@@ -36,6 +39,13 @@
       </div>
       <div id="gErr" class="err-msg hidden"></div>
       <button class="btn-primary fw" onclick="doLogin()">Đăng nhập →</button>
+      <div style="text-align:center;margin-top:14px">
+        <button onclick="openRegister()"
+          style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,.45);font-size:13px;font-family:var(--f);text-decoration:underline;text-underline-offset:3px;transition:.15s"
+          onmouseover="this.style.color='rgba(255,255,255,.75)'" onmouseout="this.style.color='rgba(255,255,255,.45)'">
+          Đăng ký
+        </button>
+      </div>
     </div>
   </div>
 
@@ -556,6 +566,34 @@
       <div class="mfooter ctr">
         <button class="btn-ghost" onclick="closeM('mResult')">Đóng</button>
         <button class="btn-primary" id="mRRetry">Làm lại</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="mRegister" class="modal hidden">
+    <div class="mbox small">
+      <div class="mhead">
+        <h3>Tạo tài khoản dùng thử</h3><button onclick="closeM('mRegister')">✕</button>
+      </div>
+      <p style="font-size:13px;color:var(--c-ink3);margin-bottom:16px">Dùng thử miễn phí <strong>15 ngày</strong>. Sau
+        đó liên hệ admin để gia hạn.</p>
+      <div class="fg"><label>Tên đăng nhập *</label><input type="text" id="regUser" placeholder="Chỉ chữ cái và số" />
+      </div>
+      <div class="fg">
+        <label>Mật khẩu *</label>
+        <div class="pw-wrap">
+          <input type="password" id="regPw" placeholder="Tối thiểu 6 ký tự" />
+          <button class="pw-eye" onclick="togglePw('regPw',this)" tabindex="-1">👁</button>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Xác nhận mật khẩu *</label>
+        <input type="password" id="regPw2" placeholder="Nhập lại mật khẩu" />
+      </div>
+      <div id="regErr" class="err-msg hidden"></div>
+      <div class="mfooter">
+        <button class="btn-ghost" onclick="closeM('mRegister')">Hủy</button>
+        <button class="btn-primary" onclick="doRegister()">Tạo tài khoản</button>
       </div>
     </div>
   </div>

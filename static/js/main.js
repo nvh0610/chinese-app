@@ -72,3 +72,32 @@ function toggleSidebar() {
   document.getElementById('content').classList.toggle('wide', sidebarCollapsed);
   document.getElementById('sbArrow').style.transform = sidebarCollapsed ? 'rotate(180deg)' : '';
 }
+
+function openRegister() {
+  ['regUser', 'regPw', 'regPw2'].forEach(id => document.getElementById(id).value = '');
+  hideErr('regErr');
+  document.getElementById('mRegister').classList.remove('hidden');
+}
+
+async function doRegister() {
+  const username = document.getElementById('regUser').value.trim();
+  const pw = document.getElementById('regPw').value;
+  const pw2 = document.getElementById('regPw2').value;
+
+  if (!username || !pw) { showErr('regErr', 'Vui lòng điền đầy đủ'); return; }
+  if (pw !== pw2) { showErr('regErr', 'Mật khẩu không khớp'); return; }
+  if (pw.length < 6) { showErr('regErr', 'Mật khẩu tối thiểu 6 ký tự'); return; }
+
+  const res = await api('/api/register', 'POST', { username, password: pw });
+  if (res.success) {
+    closeM('mRegister');
+    // Tự động login sau khi đăng ký
+    const loginRes = await api('/api/login', 'POST', { username, password: pw });
+    if (loginRes.success) {
+      window.CU = loginRes.user;
+      await showApp();
+    }
+  } else {
+    showErr('regErr', res.error || 'Lỗi đăng ký');
+  }
+}

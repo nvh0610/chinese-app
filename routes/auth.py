@@ -1,7 +1,9 @@
 from flask import Blueprint, request, jsonify, session
 from werkzeug.security import check_password_hash
 from database import get_db
-from datetime import date
+from datetime import date, timedelta
+from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import date, timedelta
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -39,3 +41,33 @@ def login():
 def logout():
     session.clear()
     return jsonify({'success': True})
+
+@auth_bp.route('/api/register', methods=['POST'])
+def register():
+    d = request.json
+    username = d.get('username', '').strip()
+    password = d.get('password', '').strip()
+
+    if not username or not password:
+        return jsonify({'error': 'Thiếu thông tin'}), 400
+    if len(username) < 3:
+        return jsonify({'error': 'Tên đăng nhập tối thiểu 3 ký tự'}), 400
+    if len(password) < 6:
+        return jsonify({'error': 'Mật khẩu tối thiểu 6 ký tự'}), 400
+
+    today = date.today()
+    expire = today + timedelta(days=15)
+
+    db = get_db()
+    try:
+        db.execute(
+            "INSERT INTO users (username,password,role,is_active,active_from,active_until) VALUES (?,?,?,?,?,?)",
+            (username, generate_password_hash(password), 'user', 1,
+             today.isoformat(), expire.isoformat())
+        )
+        db.commit()
+        db.close()
+        return jsonify({'success': True, 'expire': expire.isoformat()})
+    except Exception:
+        db.close()
+        return jsonify({'error': 'Tên đăng nhập đã tồn tại'}), 400
