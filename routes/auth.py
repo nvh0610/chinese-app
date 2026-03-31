@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, session
 from werkzeug.security import check_password_hash
-from database import get_db
+from database import get_db, fetchone, execute
 from datetime import date, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import date, timedelta
@@ -24,9 +24,8 @@ def me():
 @auth_bp.route('/api/login', methods=['POST'])
 def login():
     d = request.json
-    db = get_db()
-    u = db.execute("SELECT * FROM users WHERE username=?", (d.get('username','').strip(),)).fetchone()
-    db.close()
+    conn = get_db()
+    u = fetchone(conn, "SELECT * FROM users WHERE username=%s", (d.get('username','').strip(),))
     if not u:
         return jsonify({'success': False, 'error': 'Sai tên đăng nhập hoặc mật khẩu'})
     if not check_password_hash(u['password'], d.get('password','')):
@@ -58,16 +57,16 @@ def register():
     today = date.today()
     expire = today + timedelta(days=15)
 
-    db = get_db()
+    conn = get_db()
     try:
-        db.execute(
-            "INSERT INTO users (username,password,role,is_active,active_from,active_until) VALUES (?,?,?,?,?,?)",
+        execute(
+            "INSERT INTO users (username,password,role,is_active,active_from,active_until) VALUES (%s,%s,%s,%s,%s,%s)",
             (username, generate_password_hash(password), 'user', 1,
              today.isoformat(), expire.isoformat())
         )
-        db.commit()
-        db.close()
+        conn.commit()
+        conn.close()
         return jsonify({'success': True, 'expire': expire.isoformat()})
     except Exception:
-        db.close()
+        conn.close()
         return jsonify({'error': 'Tên đăng nhập đã tồn tại'}), 400

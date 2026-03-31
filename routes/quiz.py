@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, session
-from database import get_db
+from database import get_db, fetchone, fetchall, execute, insert_returning_id
 from .helpers import require_login, vocab_query_all, sent_query
 import random
 
@@ -75,10 +75,10 @@ def save_score():
     topic_id = d.get('topic_id') or None
     quiz_type = d.get('quiz_type', 'vocab')
     if streak <= 0: return jsonify({'success': True})
-    db = get_db()
-    db.execute("INSERT INTO scores (user_id,topic_id,quiz_type,streak) VALUES (?,?,?,?)",
+    conn = get_db()
+    execute(conn, "INSERT INTO scores (user_id,topic_id,quiz_type,streak) VALUES (?,?,?,?)",
                (u['id'], topic_id, quiz_type, streak))
-    db.commit(); db.close()
+    conn.commit(); conn.close()
     return jsonify({'success': True})
 
 @quiz_bp.route('/api/leaderboard')
@@ -86,38 +86,44 @@ def save_score():
 def leaderboard():
     topic_id = request.args.get('topic_id') or None
     quiz_type = request.args.get('quiz_type', 'all')
-    period = request.args.get('period', 'all')  # all, week, month, today
+    period = request.args.get('period', 'all') 
 
-    db = get_db()
+    conn = get_db()
+    params = []
 
-    # Build date filter
+    # SỬA: Cú pháp ngày tháng của PostgreSQL
     date_filter = ""
     if period == 'today':
-        date_filter = "AND DATE(s.recorded_at) = DATE('now')"
+        date_filter = "AND s.recorded_at::date = CURRENT_DATE"
     elif period == 'week':
-        date_filter = "AND DATE(s.recorded_at) >= DATE('now', '-7 days')"
+        date_filter = "AND s.recorded_at >= CURRENT_DATE - INTERVAL '7 days'"
     elif period == 'month':
-        date_filter = "AND DATE(s.recorded_at) >= DATE('now', '-30 days')"
+        date_filter = "AND s.recorded_at >= CURRENT_DATE - INTERVAL '30 days'"
 
-    topic_filter = "AND s.topic_id=?" if topic_id else ""
-    type_filter  = "AND s.quiz_type=?" if quiz_type != 'all' else ""
+    topic_filter = ""
+    if topic_id:
+        topic_filter = "AND s.topic_id = %s"
+        params.append(topic_id)
+    
+    type_filter = ""
+    if quiz_type != 'all':
+        type_filter = "AND s.quiz_type = %s"
+        params.append(quiz_type)
 
-    params = []
-    if topic_id: params.append(topic_id)
-    if quiz_type != 'all': params.append(quiz_type)
-
-    rows = db.execute(f"""
+    # SỬA: Dùng fetchall helper thay vì conn.execute
+    query = f"""
         SELECT u.username, u.role, MAX(s.streak) as best_streak,
                COUNT(s.id) as attempts,
-               DATE(MAX(s.recorded_at)) as last_date
+               MAX(s.recorded_at)::date as last_date
         FROM scores s
-        JOIN users u ON u.id=s.user_id
+        JOIN users u ON u.id = s.user_id
         WHERE 1=1 {topic_filter} {type_filter} {date_filter}
-        GROUP BY s.user_id
+        GROUP BY s.user_id, u.username, u.role
         ORDER BY best_streak DESC
         LIMIT 20
-    """, params).fetchall()
-    db.close()
+    """
+    rows = fetchall(conn, query, params)
+    conn.close()
     return jsonify([dict(r) for r in rows])
 
 @quiz_bp.route('/api/errors', methods=['POST'])
@@ -125,26 +131,28 @@ def leaderboard():
 def record_error():
     u = session['user']
     d = request.json
-    db = get_db()
-    db.execute("""
+    conn = get_db()
+    # PostgreSQL sử dụng cú pháp ON CONFLICT hơi khác một chút (cần liệt kê cột target)
+    execute(conn, """
         INSERT INTO word_errors (user_id, word_ref, quiz_type, error_count)
-        VALUES (?,?,?,1)
-        ON CONFLICT(user_id, word_ref, quiz_type)
-        DO UPDATE SET error_count = error_count + 1
+        VALUES (%s, %s, %s, 1)
+        ON CONFLICT (user_id, word_ref, quiz_type)
+        DO UPDATE SET error_count = word_errors.error_count + 1
     """, (u['id'], d['word_ref'], d['quiz_type']))
-    db.commit()
-    db.close()
+    conn.commit()
+    conn.close()
     return jsonify({'success': True})
 
 @quiz_bp.route('/api/errors/<word_ref>')
 @require_login
 def get_error(word_ref):
     u = session['user']
-    db = get_db()
-    rows = db.execute(
-        "SELECT quiz_type, error_count FROM word_errors WHERE user_id=? AND word_ref=?",
+    conn = get_db()
+    # SỬA: Dùng fetchall helper
+    rows = fetchall(conn, 
+        "SELECT quiz_type, error_count FROM word_errors WHERE user_id=%s AND word_ref=%s",
         (u['id'], word_ref)
-    ).fetchall()
-    db.close()
+    )
+    conn.close()
     total = sum(r['error_count'] for r in rows)
     return jsonify({'total': total, 'detail': [dict(r) for r in rows]})
