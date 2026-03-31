@@ -93,7 +93,6 @@ def delete_user(uid):
         return jsonify({'error': 'Không thể xóa tài khoản đang dùng'}), 400
     
     conn = get_db()
-    # SỬA: Đổi ? thành %s
     execute(conn, "DELETE FROM users WHERE id=%s", (uid,))
     conn.commit()
     conn.close()
