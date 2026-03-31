@@ -5,6 +5,7 @@ from routes.users import users_bp
 from routes.topics import topics_bp
 from routes.vocabulary import vocab_bp
 from routes.quiz import quiz_bp
+import os
 
 app = Flask(__name__)
 app.secret_key = 'chinese_secret_nvh0610_2024'
