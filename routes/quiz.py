@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, session
-from database import get_db, fetchone, fetchall, execute, insert_returning_id
+from database import db_conn, fetchone, fetchall, execute, insert_returning_id
 from .helpers import require_login, vocab_query_all, sent_query
 import random
 
@@ -13,7 +13,8 @@ def quiz_vocab():
     exclude = [int(x) for x in request.args.get('exclude','').split(',') if x]
     
     # 1. Lấy tất cả từ trong topic hiện tại
-    all_v = vocab_query_all(u, tid)
+    with db_conn() as conn:
+        all_v = vocab_query_all(conn, u, tid)
     avail = [v for v in all_v if v['id'] not in exclude]
     
     if not avail: avail = all_v
@@ -29,7 +30,8 @@ def quiz_vocab():
     if len(others) < 3:
         # Lấy thêm từ ở TẤT CẢ các topic khác của user này
         # Giả sử hàm vocab_query_all(u, None) sẽ trả về toàn bộ từ vựng của user
-        global_all = vocab_query_all(u, None) 
+        with db_conn() as conn:
+            global_all = vocab_query_all(conn, u, None) 
         
         # Lọc bỏ từ đã chọn (chosen) và những từ đã có trong others
         existing_ids = {chosen['id']} | {v['id'] for v in others}
@@ -57,7 +59,8 @@ def quiz_sentence():
     u = session['user']
     tid = request.args.get('topic_id')
     exclude = [int(x) for x in request.args.get('exclude','').split(',') if x]
-    all_s = sent_query(u, tid)
+    with db_conn() as conn:
+        all_s = sent_query(conn, u, tid)
     avail = [s for s in all_s if s['id'] not in exclude]
     if not avail: avail = all_s
     if not avail: return jsonify({'error':'Không có câu'}),404
@@ -75,10 +78,9 @@ def save_score():
     topic_id = d.get('topic_id') or None
     quiz_type = d.get('quiz_type', 'vocab')
     if streak <= 0: return jsonify({'success': True})
-    conn = get_db()
-    execute(conn, "INSERT INTO scores (user_id,topic_id,quiz_type,streak) VALUES (%s,%s,%s,%s)",
-        (u['id'], topic_id, quiz_type, streak))
-    conn.commit(); conn.close()
+    with db_conn() as conn:
+        execute(conn, "INSERT INTO scores (user_id,topic_id,quiz_type,streak) VALUES (%s,%s,%s,%s)",
+            (u['id'], topic_id, quiz_type, streak))
     return jsonify({'success': True})
 
 @quiz_bp.route('/api/leaderboard')
@@ -88,17 +90,17 @@ def leaderboard():
     quiz_type = request.args.get('quiz_type', 'all')
     period = request.args.get('period', 'all') 
 
-    conn = get_db()
-    params = []
+    with db_conn() as conn:
+        params = []
 
-    # SỬA: Cú pháp ngày tháng của PostgreSQL
-    date_filter = ""
-    if period == 'today':
-        date_filter = "AND s.recorded_at::date = CURRENT_DATE"
-    elif period == 'week':
-        date_filter = "AND s.recorded_at >= CURRENT_DATE - INTERVAL '7 days'"
-    elif period == 'month':
-        date_filter = "AND s.recorded_at >= CURRENT_DATE - INTERVAL '30 days'"
+        # SỬA: Cú pháp ngày tháng của PostgreSQL
+        date_filter = ""
+        if period == 'today':
+            date_filter = "AND s.recorded_at::date = CURRENT_DATE"
+        elif period == 'week':
+            date_filter = "AND s.recorded_at >= CURRENT_DATE - INTERVAL '7 days'"
+        elif period == 'month':
+            date_filter = "AND s.recorded_at >= CURRENT_DATE - INTERVAL '30 days'"
 
     topic_filter = ""
     if topic_id:
@@ -123,7 +125,6 @@ def leaderboard():
         LIMIT 20
     """
     rows = fetchall(conn, query, params)
-    conn.close()
     return jsonify([dict(r) for r in rows])
 
 @quiz_bp.route('/api/errors', methods=['POST'])
@@ -131,28 +132,25 @@ def leaderboard():
 def record_error():
     u = session['user']
     d = request.json
-    conn = get_db()
+    with db_conn() as conn:
     # PostgreSQL sử dụng cú pháp ON CONFLICT hơi khác một chút (cần liệt kê cột target)
-    execute(conn, """
-        INSERT INTO word_errors (user_id, word_ref, quiz_type, error_count)
-        VALUES (%s, %s, %s, 1)
-        ON CONFLICT (user_id, word_ref, quiz_type)
-        DO UPDATE SET error_count = word_errors.error_count + 1
-    """, (u['id'], d['word_ref'], d['quiz_type']))
-    conn.commit()
-    conn.close()
+        execute(conn, """
+            INSERT INTO word_errors (user_id, word_ref, quiz_type, error_count)
+            VALUES (%s, %s, %s, 1)
+            ON CONFLICT (user_id, word_ref, quiz_type)
+            DO UPDATE SET error_count = word_errors.error_count + 1
+        """, (u['id'], d['word_ref'], d['quiz_type']))
     return jsonify({'success': True})
 
 @quiz_bp.route('/api/errors/<word_ref>')
 @require_login
 def get_error(word_ref):
     u = session['user']
-    conn = get_db()
+    with db_conn() as conn:
     # SỬA: Dùng fetchall helper
-    rows = fetchall(conn, 
-        "SELECT quiz_type, error_count FROM word_errors WHERE user_id=%s AND word_ref=%s",
-        (u['id'], word_ref)
-    )
-    conn.close()
+        rows = fetchall(conn, 
+            "SELECT quiz_type, error_count FROM word_errors WHERE user_id=%s AND word_ref=%s",
+            (u['id'], word_ref)
+        )
     total = sum(r['error_count'] for r in rows)
     return jsonify({'total': total, 'detail': [dict(r) for r in rows]})

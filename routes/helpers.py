@@ -1,6 +1,6 @@
 from flask import session, jsonify
 from functools import wraps
-from database import get_db, fetchone, fetchall, execute
+from database import db_conn, fetchone, fetchall, execute
 
 def require_login(f):
     @wraps(f)
@@ -19,8 +19,7 @@ def require_admin(f):
         return f(*a, **kw)
     return d
 
-def vocab_query(user, topic_id=None, page=1, per_page=20, search=''):
-    conn = get_db()
+def vocab_query(conn, user, topic_id=None, page=1, per_page=20, search=''):
     base = """SELECT v.*, t.name as topic_name,
               CASE WHEN v.owner_id IS NULL THEN 'public' ELSE 'private' END as scope
               FROM vocabulary v 
@@ -55,12 +54,10 @@ def vocab_query(user, topic_id=None, page=1, per_page=20, search=''):
     rows = fetchall(conn, f"{base} {where} ORDER BY t.name, v.hanzi LIMIT %s OFFSET %s", 
                     params + [per_page, offset])
     
-    conn.close()
     return [dict(r) for r in rows], total
 
-def vocab_query_all(user, topic_id=None):
+def vocab_query_all(conn, user, topic_id=None):
     """Đã fix: Dùng fetchall helper và đổi ? thành %s"""
-    conn = get_db()
     base = """SELECT v.*, t.name as topic_name,
               CASE WHEN v.owner_id IS NULL THEN 'public' ELSE 'private' END as scope
               FROM vocabulary v 
@@ -85,11 +82,9 @@ def vocab_query_all(user, topic_id=None):
     # SỬA TẠI ĐÂY: Dùng fetchall thay vì conn.execute
     rows = fetchall(conn, query, params)
     
-    conn.close()
     return [dict(r) for r in rows]
 
-def sent_query(user, topic_id=None):
-    conn = get_db()
+def sent_query(conn, user, topic_id=None, limit=None, offset=None):
     base = """SELECT s.*, t.name as topic_name,
               CASE WHEN s.owner_id IS NULL THEN 'public' ELSE 'private' END as scope
               FROM sentences s 
@@ -97,12 +92,14 @@ def sent_query(user, topic_id=None):
     
     conds, params = [], []
 
+    # Phân quyền
     if user['role'] == 'admin':
         conds.append("s.owner_id IS NULL")
     else:
         conds.append("(s.owner_id IS NULL OR s.owner_id = %s)")
         params.append(user['id'])
 
+    # Lọc theo topic
     if topic_id:
         conds.append("s.topic_id = %s")
         params.append(topic_id)
@@ -110,7 +107,14 @@ def sent_query(user, topic_id=None):
     where = (" WHERE " + " AND ".join(conds)) if conds else ""
     
     query = f"{base} {where} ORDER BY t.name"
-    rows = fetchall(conn, query, params)
     
-    conn.close()
+    # THÊM PHẦN PHÂN TRANG VÀO QUERY
+    if limit is not None:
+        query += " LIMIT %s"
+        params.append(limit)
+    if offset is not None:
+        query += " OFFSET %s"
+        params.append(offset)
+        
+    rows = fetchall(conn, query, params)
     return [dict(r) for r in rows]
