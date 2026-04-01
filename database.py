@@ -2,9 +2,12 @@ import psycopg2
 import psycopg2.extras
 import os
 from werkzeug.security import generate_password_hash
-from dotenv import load_dotenv
-
-load_dotenv()  # THÊM DÒNG NÀY ĐỂ LOAD FILE .env
+import os
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # Vercel không cần
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
@@ -33,6 +36,7 @@ def insert_returning_id(conn, sql, params=()):
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute(sql, params)
     row = cur.fetchone()
+    cur.close()
     return row['id'] if row else None
 
 def init_db():

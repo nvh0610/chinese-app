@@ -46,7 +46,9 @@ def create_vocabulary():
     
     row = fetchone(conn, "SELECT v.*, t.name as topic_name FROM vocabulary v JOIN topics t ON t.id=v.topic_id WHERE v.id=%s", (vid,))
     conn.close()
-    return jsonify({'success': True, 'vocabulary': dict(row)})
+    if row:
+        return jsonify({'success': True, 'vocabulary': dict(row)})
+    return jsonify({'success': False, 'error': 'Không tìm thấy từ vựng vừa tạo'})
 
 @vocab_bp.route('/api/vocabulary/import', methods=['POST'])
 @require_login

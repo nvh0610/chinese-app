@@ -76,8 +76,8 @@ def save_score():
     quiz_type = d.get('quiz_type', 'vocab')
     if streak <= 0: return jsonify({'success': True})
     conn = get_db()
-    execute(conn, "INSERT INTO scores (user_id,topic_id,quiz_type,streak) VALUES (?,?,?,?)",
-               (u['id'], topic_id, quiz_type, streak))
+    execute(conn, "INSERT INTO scores (user_id,topic_id,quiz_type,streak) VALUES (%s,%s,%s,%s)",
+        (u['id'], topic_id, quiz_type, streak))
     conn.commit(); conn.close()
     return jsonify({'success': True})
 

@@ -10,11 +10,16 @@ auth_bp = Blueprint('auth', __name__)
 def is_account_active(user):
     if not user['is_active']:
         return False, 'Tài khoản đã bị vô hiệu hóa'
-    today = date.today().isoformat()
-    if user['active_from'] and today < user['active_from']:
-        return False, f'Tài khoản chưa được kích hoạt (từ {user["active_from"]})'
-    if user['active_until'] and today > user['active_until']:
-        return False, f'Tài khoản đã hết hạn (đến {user["active_until"]})'
+    today = date.today()
+    af = user['active_from']
+    au = user['active_until']
+    # Supabase trả về date object, cần convert nếu là string
+    if isinstance(af, str): af = date.fromisoformat(af) if af else None
+    if isinstance(au, str): au = date.fromisoformat(au) if au else None
+    if af and today < af:
+        return False, f'Tài khoản chưa được kích hoạt (từ {af})'
+    if au and today > au:
+        return False, f'Tài khoản đã hết hạn. Vui lòng liên hệ admin để gia hạn.'
     return True, None
 
 @auth_bp.route('/api/me')
@@ -26,6 +31,7 @@ def login():
     d = request.json
     conn = get_db()
     u = fetchone(conn, "SELECT * FROM users WHERE username=%s", (d.get('username','').strip(),))
+    conn.close()
     if not u:
         return jsonify({'success': False, 'error': 'Sai tên đăng nhập hoặc mật khẩu'})
     if not check_password_hash(u['password'], d.get('password','')):
@@ -59,7 +65,7 @@ def register():
 
     conn = get_db()
     try:
-        execute(
+        execute(conn,
             "INSERT INTO users (username,password,role,is_active,active_from,active_until) VALUES (%s,%s,%s,%s,%s,%s)",
             (username, generate_password_hash(password), 'user', 1,
              today.isoformat(), expire.isoformat())

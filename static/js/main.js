@@ -30,10 +30,11 @@ async function showApp() {
   sbUser.innerHTML = `<span style="font-size:15px">${window.CU.role === 'admin' ? '👑' : '👤'}</span><span class="sb-label" style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis">${window.CU.username}</span>`;
 
   await loadAllTopics();
-  loadVQ(); loadTQ(); loadSQ(); loadWR();
-  loadVList(); loadSList(); loadTList();
-  loadLB();
-  if (window.CU.role === 'admin') loadUList();
+  // loadVQ(); loadTQ(); loadSQ(); loadWR();
+  // loadVList(); loadSList(); loadTList();
+  // loadLB();
+  // if (window.CU.role === 'admin') loadUList();
+  loadVQ();
 }
 
 async function doLogin() {
@@ -57,14 +58,41 @@ async function doLogout() {
 
 // ══ Page navigation ══════════════════════════════════════════════════════════
 function switchPage(page, btn) {
+  // 1. Đổi active class cho menu và page (Giữ nguyên code cũ của bạn)
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.sb-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
   btn.classList.add('active');
-  if (page === 'leaderboard') loadLB();
-  if (page === 'admin') loadUList();
-}
 
+  // 2. LOGIC LOAD THEO YÊU CẦU (Lazy Load)
+  console.log("Đang mở trang:", page);
+
+  switch (page) {
+    case 'quiz-vocab':
+      loadVQ(); // Load trắc nghiệm
+      break;
+    case 'quiz-type':
+      loadTQ(); // Load tự điền
+      break;
+    case 'quiz-sent':
+      loadSQ(); // Load sắp xếp câu
+      break;
+    case 'manage':
+      loadVList(); // Load kho từ
+      loadSList(); // Load câu
+      loadTList(); // Load bài
+      break;
+    case 'writing':
+      loadWR(); // Load luyện viết
+      break;
+    case 'leaderboard':
+      loadLB(); // Load bảng xếp hạng (Bạn đã làm phần này rồi)
+      break;
+    case 'admin':
+      loadUList(); // Load quản lý user
+      break;
+  }
+}
 // ══ Sidebar toggle ════════════════════════════════════════════════════════════
 function toggleSidebar() {
   sidebarCollapsed = !sidebarCollapsed;

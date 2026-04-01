@@ -23,7 +23,7 @@ def get_topics():
         params.append(u['id'])
 
     if search:
-        conds.append("(t.name LIKE %s OR t.description LIKE %s)")
+        conds.append("(t.name ILIKE %s OR t.description ILIKE %s)")
         params += [f'%{search}%', f'%{search}%']
 
     where = (" WHERE " + " AND ".join(conds)) if conds else ""
@@ -45,7 +45,7 @@ def get_topics():
         LEFT JOIN users u ON u.id = t.owner_id
         {where}
         GROUP BY t.id, u.username 
-        ORDER BY t.owner_id IS NULL DESC, t.name
+        ORDER BY (t.owner_id IS NULL) DESC, t.name
         LIMIT %s OFFSET %s
     """, params + [per_page, offset])
     

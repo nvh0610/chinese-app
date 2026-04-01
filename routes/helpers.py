@@ -40,7 +40,7 @@ def vocab_query(user, topic_id=None, page=1, per_page=20, search=''):
         params.append(topic_id)
         
     if search:
-        conds.append("(v.hanzi LIKE %s OR v.vietnamese LIKE %s OR v.pinyin LIKE %s)")
+        conds.append("(v.hanzi ILIKE %s OR v.vietnamese ILIKE %s OR v.pinyin ILIKE %s)")
         params += [f'%{search}%', f'%{search}%', f'%{search}%']
 
     where = (" WHERE " + " AND ".join(conds)) if conds else ""
