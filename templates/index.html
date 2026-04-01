@@ -53,6 +53,17 @@
 
   <!-- ══ APP SHELL ═══════════════════════════════════════════════════════════ -->
   <div id="appShell" class="hidden app-shell">
+    <div class="mobile-user-nav">
+      <div class="m-user-pill" onclick="toggleMUserMenu()">
+        <span id="mUserIconMobile">👤</span>
+        <span id="mUserNameMobile">User</span>
+      </div>
+      <div id="mUserDropdown" class="m-dropdown hidden">
+        <button class="m-dropdown-item logout" onclick="doLogout()">
+          <span class="sb-icon">↩</span> Đăng xuất
+        </button>
+      </div>
+    </div>
 
     <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
@@ -607,5 +618,3 @@
   <script src="/static/js/main.js"></script>
   <script src="/static/js/writing.js"></script>
 </body>
-
-</html>

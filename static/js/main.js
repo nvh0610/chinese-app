@@ -18,24 +18,49 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function showApp() {
   document.getElementById('loginGate').classList.add('hidden');
   document.getElementById('appShell').classList.remove('hidden');
+
   await loadAllTopics();
 
-  // Admin nav
+  // 1. Xử lý quyền Admin (ẩn/hiện các nút admin-only)
   if (window.CU.role === 'admin') {
     document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
   }
 
-  // User chip in sidebar
+  // 2. Cập nhật Sidebar (Cho máy tính)
   const sbUser = document.getElementById('sbUser');
-  sbUser.innerHTML = `<span style="font-size:15px">${window.CU.role === 'admin' ? '👑' : '👤'}</span><span class="sb-label" style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis">${window.CU.username}</span>`;
+  if (sbUser) {
+    sbUser.innerHTML = `<span style="font-size:15px">${window.CU.role === 'admin' ? '👑' : '👤'}</span>
+                        <span class="sb-label" style="font-size:12px;font-weight:600;">${window.CU.username}</span>`;
+  }
 
-  await loadAllTopics();
-  // loadVQ(); loadTQ(); loadSQ(); loadWR();
-  // loadVList(); loadSList(); loadTList();
-  // loadLB();
-  // if (window.CU.role === 'admin') loadUList();
-  loadVQ();
+  // 3. CẬP NHẬT FLOATING MENU (Cho điện thoại)
+  const mNameMobile = document.getElementById('mUserNameMobile');
+  const mIconMobile = document.getElementById('mUserIconMobile');
+
+  if (mNameMobile) {
+    mNameMobile.textContent = window.CU.username; // Lấy tên thật từ nick (ví dụ: admin)
+  }
+  if (mIconMobile) {
+    mIconMobile.textContent = window.CU.role === 'admin' ? '👑' : '👤'; // Đổi icon theo role
+  }
+
+  loadVQ(); // Load trang đầu tiên
 }
+
+// 2. Hàm đóng mở menu
+function toggleMUserMenu() {
+  const menu = document.getElementById('mUserDropdown');
+  menu.classList.toggle('hidden');
+}
+
+// 3. Tự động đóng menu khi bấm ra ngoài
+document.addEventListener('click', (e) => {
+  const nav = document.querySelector('.mobile-user-nav');
+  const menu = document.getElementById('mUserDropdown');
+  if (nav && !nav.contains(e.target)) {
+    menu.classList.add('hidden');
+  }
+});
 
 async function doLogin() {
   const username = document.getElementById('gU').value.trim();

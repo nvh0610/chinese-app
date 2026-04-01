@@ -2092,3 +2092,69 @@ body {
   color: #fff;
   border-color: var(--c-blue);
 }
+
+/* Mặc định ẩn */
+.mobile-user-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-user-nav {
+    display: block;
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 1000;
+    font-family: var(--f);
+  }
+
+  .m-user-pill {
+    background: var(--c-sur);
+    border: 1.5px solid var(--c-bdr);
+    padding: 6px 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .m-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: var(--c-sur);
+    border: 1px solid var(--c-bdr);
+    border-radius: var(--r-sm);
+    width: 150px;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    animation: fadeUp 0.2s var(--ease);
+  }
+
+  .m-dropdown-item {
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    background: none;
+    text-align: left;
+    font-family: var(--f);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+  }
+
+  .m-dropdown-item:active {
+    background: var(--c-bg);
+  }
+
+  .m-dropdown-item.logout {
+    color: var(--c-red);
+    border-top: 1px solid var(--c-bdr);
+  }
+}
