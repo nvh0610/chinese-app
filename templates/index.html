@@ -79,7 +79,7 @@
           <span class="sb-icon">📝</span><span class="sb-label">Trắc nghiệm</span>
         </button>
         <button class="sb-btn" data-page="quiz-type" onclick="switchPage('quiz-type',this)">
-          <span class="sb-icon">✍️</span><span class="sb-label">Tự điền</span>
+          <span class="sb-icon">✍️</span><span class="sb-label">Gõ chữ Hán</span>
         </button>
         <button class="sb-btn" data-page="quiz-sent" onclick="switchPage('quiz-sent',this)">
           <span class="sb-icon">🔀</span><span class="sb-label">Sắp xếp câu</span>
@@ -88,7 +88,7 @@
           <span class="sb-icon">📚</span><span class="sb-label">Kho từ</span>
         </button>
         <button class="sb-btn" data-page="writing" onclick="switchPage('writing',this)">
-          <span class="sb-icon">✏️</span><span class="sb-label">Luyện viết</span>
+          <span class="sb-icon">✏️</span><span class="sb-label">Luyện viết chữ Hán</span>
         </button>
         <button class="sb-btn" data-page="leaderboard" onclick="switchPage('leaderboard',this)">
           <span class="sb-icon">🏆</span><span class="sb-label">Bảng xếp hạng</span>
@@ -142,7 +142,7 @@
           </div>
         </div>
 
-        <!-- PAGE: TỰ ĐIỀN -->
+        <!-- PAGE: Gõ chữ Hán -->
         <div id="page-quiz-type" class="page">
           <div class="ph">
             <h1>✍️ Gõ chữ Hán và nghe</h1>
@@ -186,7 +186,7 @@
             <div style="display:flex;gap:4px">
               <button class="sq-mode-btn active" id="sqModeArrangeBar" onclick="setSQModeBar('arrange',this)">🔀 Sắp
                 xếp</button>
-              <button class="sq-mode-btn" id="sqModeTypeBar" onclick="setSQModeBar('type',this)">⌨️ Tự đánh</button>
+              <button class="sq-mode-btn" id="sqModeTypeBar" onclick="setSQModeBar('type',this)">⌨️ Tự điền câu</button>
             </div>
             <div class="score-row">
               <span class="chip g">✓ <strong id="sqR">0</strong></span>
@@ -270,7 +270,7 @@
             <select class="sel" id="lbType" onchange="loadLB()">
               <option value="all">Tất cả loại</option>
               <option value="vocab">Trắc nghiệm</option>
-              <option value="type">Tự điền</option>
+              <option value="type">Gõ chữ Hán</option>
               <option value="sent">Sắp xếp câu</option>
             </select>
             <select class="sel" id="lbPeriod" onchange="loadLB()">
@@ -283,7 +283,7 @@
           <div id="lbList"></div>
         </div>
 
-        <!-- PAGE: LUYỆN VIẾT -->
+        <!-- PAGE: Luyện viết chữ Hán -->
         <div id="page-writing" class="page">
           <div class="ph">
             <h1>✏️ Luyện viết chữ Hán</h1>

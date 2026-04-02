@@ -412,7 +412,7 @@ function checkSQ() {
   _finishSQ(ok);
 }
 
-// ── Mode 2: Tự đánh ──────────────────────────────────────────────────────────
+// ── Mode 2: Tự điền câu ──────────────────────────────────────────────────────────
 function checkSQType() {
   const inp = document.getElementById('sqTypeInp');
   if (!inp || inp.disabled) return;

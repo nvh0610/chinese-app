@@ -97,7 +97,7 @@ function switchPage(page, btn) {
       loadVQ(); // Load trắc nghiệm
       break;
     case 'quiz-type':
-      loadTQ(); // Load tự điền
+      loadTQ(); // Load Gõ chữ Hán
       break;
     case 'quiz-sent':
       loadSQ(); // Load sắp xếp câu
@@ -108,7 +108,7 @@ function switchPage(page, btn) {
       loadTList(); // Load bài
       break;
     case 'writing':
-      loadWR(); // Load luyện viết
+      loadWR(); // Load Luyện viết chữ Hán
       break;
     case 'leaderboard':
       loadLB(); // Load bảng xếp hạng (Bạn đã làm phần này rồi)

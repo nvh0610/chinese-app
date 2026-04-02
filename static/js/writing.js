@@ -27,7 +27,7 @@ async function loadWR() {
     <div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start">
       <!-- Info bên trái -->
       <div style="flex:1;min-width:200px">
-        <div class="ql">Luyện viết chữ</div>
+        <div class="ql">Luyện viết chữ Hán chữ</div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
         <div style="font-family:var(--fz);font-size:56px;font-weight:900;color:var(--c-ink);line-height:1">${q.hanzi}</div>
         <div style="display:flex;flex-direction:column;gap:4px">

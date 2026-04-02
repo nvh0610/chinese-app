@@ -5,18 +5,34 @@ import pandas as pd
 
 vocab_bp = Blueprint('vocab', __name__)
 
+# @vocab_bp.route('/api/vocabulary')
+# @require_login
+# def get_vocabulary():
+#     u = session['user']
+#     tid = request.args.get('topic_id')
+#     page = int(request.args.get('page', 1))
+#     search = request.args.get('search', '').strip()
+#     scope = request.args.get('scope', '')
+#     with db_conn() as conn:
+#         rows, total = vocab_query(conn, u, tid, page, 20, search)
+#     if scope:
+#         rows = [r for r in rows if r['scope'] == scope]
+#     return jsonify({'items': rows, 'total': total, 'page': page})
+
 @vocab_bp.route('/api/vocabulary')
 @require_login
 def get_vocabulary():
     u = session['user']
+    # Lấy các tham số và ép kiểu an toàn
     tid = request.args.get('topic_id')
-    page = int(request.args.get('page', 1))
+    page = max(1, int(request.args.get('page', 1)))
     search = request.args.get('search', '').strip()
-    scope = request.args.get('scope', '')
+    scope = request.args.get('scope', '') # 'public' hoặc 'private'
+
     with db_conn() as conn:
-        rows, total = vocab_query(conn, u, tid, page, 20, search)
-    if scope:
-        rows = [r for r in rows if r['scope'] == scope]
+        # Truyền thẳng scope vào hàm query
+        rows, total = vocab_query(conn, u, tid, page, 20, search, scope)
+    
     return jsonify({'items': rows, 'total': total, 'page': page})
 
 @vocab_bp.route('/api/vocabulary', methods=['POST'])
@@ -120,41 +136,60 @@ def delete_vocabulary(vid):
         execute(conn, "DELETE FROM vocabulary WHERE id=%s", (vid,))
     return jsonify({'success': True})
 
+# @vocab_bp.route('/api/sentences')
+# @require_login
+# def get_sentences():
+#     u = session['user']
+#     tid = request.args.get('topic_id')
+    
+#     # Lấy page và per_page, nếu không có thì mặc định là None (để lấy hết)
+#     page = request.args.get('page', type=int)
+#     per_page = request.args.get('per_page', type=int)
+
+#     with db_conn() as conn:
+#         # Bước 1: Tính tổng số lượng (Phải đếm để Frontend hiển thị thanh phân trang)
+#         # Tái sử dụng logic điều kiện của sentences
+#         count_conds, count_params = [], []
+#         if u['role'] == 'admin':
+#             count_conds.append("owner_id IS NULL")
+#         else:
+#             count_conds.append("(owner_id IS NULL OR owner_id = %s)")
+#             count_params.append(u['id'])
+#         if tid:
+#             count_conds.append("topic_id = %s")
+#             count_params.append(tid)
+            
+#         where_clause = (" WHERE " + " AND ".join(count_conds)) if count_conds else ""
+#         total_row = fetchone(conn, f"SELECT COUNT(*) as count FROM sentences {where_clause}", count_params)
+#         total = total_row['count'] if total_row else 0
+
+#         # Bước 2: Lấy dữ liệu (Phân trang hoặc lấy hết)
+#         if page and per_page:
+#             limit = per_page
+#             offset = (page - 1) * per_page
+#             paged_rows = sent_query(conn, u, tid, limit=limit, offset=offset)
+#         else:
+#             # Nếu không truyền page/per_page thì lấy toàn bộ như cũ
+#             paged_rows = sent_query(conn, u, tid)
+
+#     return jsonify({
+#         'items': paged_rows, 
+#         'total': total, 
+#         'page': page or 1,
+#         'per_page': per_page or total
+#     })
+
 @vocab_bp.route('/api/sentences')
 @require_login
 def get_sentences():
     u = session['user']
     tid = request.args.get('topic_id')
-    
-    # Lấy page và per_page, nếu không có thì mặc định là None (để lấy hết)
     page = request.args.get('page', type=int)
     per_page = request.args.get('per_page', type=int)
 
     with db_conn() as conn:
-        # Bước 1: Tính tổng số lượng (Phải đếm để Frontend hiển thị thanh phân trang)
-        # Tái sử dụng logic điều kiện của sentences
-        count_conds, count_params = [], []
-        if u['role'] == 'admin':
-            count_conds.append("owner_id IS NULL")
-        else:
-            count_conds.append("(owner_id IS NULL OR owner_id = %s)")
-            count_params.append(u['id'])
-        if tid:
-            count_conds.append("topic_id = %s")
-            count_params.append(tid)
-            
-        where_clause = (" WHERE " + " AND ".join(count_conds)) if count_conds else ""
-        total_row = fetchone(conn, f"SELECT COUNT(*) as count FROM sentences {where_clause}", count_params)
-        total = total_row['count'] if total_row else 0
-
-        # Bước 2: Lấy dữ liệu (Phân trang hoặc lấy hết)
-        if page and per_page:
-            limit = per_page
-            offset = (page - 1) * per_page
-            paged_rows = sent_query(conn, u, tid, limit=limit, offset=offset)
-        else:
-            # Nếu không truyền page/per_page thì lấy toàn bộ như cũ
-            paged_rows = sent_query(conn, u, tid)
+        # Gọi 1 hàm duy nhất để lấy cả list và total
+        paged_rows, total = sent_query(conn, u, tid, page, per_page)
 
     return jsonify({
         'items': paged_rows, 

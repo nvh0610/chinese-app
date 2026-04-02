@@ -1,6 +1,6 @@
 # 汉语学习 - Ứng dụng Học Tiếng Trung
 
-Ứng dụng web học tiếng Trung với SQLite, hỗ trợ trắc nghiệm, tự điền chữ Hán, và sắp xếp câu.
+Ứng dụng web học tiếng Trung với SQLite, hỗ trợ trắc nghiệm, Gõ  chữ Hán, và sắp xếp câu.
 
 ## Cài đặt
 
@@ -32,7 +32,7 @@ http://localhost:5000
 - Hiện câu ví dụ sau khi trả lời
 - Đếm điểm đúng/sai
 
-### ✍️ Tự điền chữ Hán
+### ✍️ Gõ  chữ Hán
 - Hiển thị nghĩa tiếng Việt + pinyin gợi ý
 - Tự nhập chữ Hán vào ô
 - Có nút gợi ý chữ đầu
