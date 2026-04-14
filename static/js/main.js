@@ -92,6 +92,13 @@ function switchPage(page, btn) {
   // 2. LOGIC LOAD THEO YÊU CẦU (Lazy Load)
   console.log("Đang mở trang:", page);
 
+  // History: reset session khi đổi quiz type (khác với sub-mode trong cùng page)
+  const typeMap = { 'quiz-vocab': 'vq', 'quiz-type': 'tq', 'quiz-sent': 'sq' };
+  if (typeof QuizHistory !== 'undefined') {
+    if (typeMap[page]) QuizHistory.resetType(typeMap[page]);
+    else QuizHistory.resetType(null);
+  }
+
   switch (page) {
     case 'quiz-vocab':
       loadVQ(); // Load trắc nghiệm

@@ -2158,3 +2158,79 @@ body {
     border-top: 1px solid var(--c-bdr);
   }
 }
+
+/* ══ Quiz History — in-session prev/next navigation ══════════════════════ */
+.qh-prev-btn {
+  background: var(--c-bg);
+  border: 1px solid var(--c-bdr);
+  color: var(--c-ink);
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+.qh-prev-btn:hover:not(:disabled) { background: var(--c-bdr); }
+.qh-prev-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* History view banner */
+.qh-banner {
+  background: var(--c-blue-s);
+  border: 1px solid var(--c-blue);
+  color: var(--c-blue);
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+.qh-banner button {
+  background: #fff;
+  border: 1px solid var(--c-blue);
+  color: var(--c-blue);
+  padding: 5px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+}
+.qh-banner button:hover { background: var(--c-blue); color: #fff; }
+
+.qh-actions {
+  margin-top: 18px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* History view review content */
+.qh-review { margin: 12px 0; }
+.qh-review-q { font-size: 28px; margin-bottom: 4px; color: var(--c-ink); }
+.qh-review-sub { color: var(--c-ink3); font-size: 14px; margin-bottom: 8px; }
+.qh-opt {
+  padding: 10px 14px;
+  border: 2px solid var(--c-bdr);
+  border-radius: 10px;
+  margin: 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.qh-opt-correct { border-color: var(--c-grn); background: var(--c-grn-s); }
+.qh-opt-wrong { border-color: var(--c-red); background: var(--c-red-s); }
+.qh-opt em { color: var(--c-ink3); font-size: 12px; margin-left: auto; }
+
+.qh-label { color: var(--c-ink3); font-size: 12px; margin-top: 12px; }
+.qh-value-correct { font-size: 30px; color: var(--c-grn); font-weight: 600; }
+.qh-value-wrong { font-size: 30px; color: var(--c-red); font-weight: 600; }
+.qh-value-answer { font-size: 30px; color: var(--c-grn); font-weight: 600; }
+
+@media (max-width: 640px) {
+  .qh-review-q { font-size: 24px; }
+  .qh-value-correct, .qh-value-wrong, .qh-value-answer { font-size: 26px; }
+  .qh-prev-btn { padding: 8px 12px; font-size: 13px; }
+}

@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Read(///wsl.localhost/Ubuntu-22.04/root/my-project/**)",
-      "Bash(wc -l app.py database.py routes/*.py)"
+      "Bash(wc -l app.py database.py routes/*.py)",
+      "Bash(ls \"\\\\\\\\wsl.localhost\\\\Ubuntu-22.04\\\\root\\\\my-project\\\\chinese-app\\\\static\\\\css\\\\\")",
+      "Bash(node --check \"//wsl.localhost/Ubuntu-22.04/root/my-project/chinese-app/static/js/quiz.js\")",
+      "Bash(node --check \"//wsl.localhost/Ubuntu-22.04/root/my-project/chinese-app/static/js/main.js\")"
     ]
   }
 }
