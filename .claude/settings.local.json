@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(///wsl.localhost/Ubuntu-22.04/root/my-project/**)",
+      "Bash(wc -l app.py database.py routes/*.py)"
+    ]
+  }
+}

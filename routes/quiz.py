@@ -59,78 +59,68 @@ def quiz_vocab():
     u = session['user']
     tid = request.args.get('topic_id')
     exclude_str = request.args.get('exclude', '').strip()
-    
-    # 1. Xử lý exclude an toàn
+
     exclude_ids = [int(x) for x in exclude_str.split(',') if x.isdigit()]
-    exclude_tuple = tuple(exclude_ids) if exclude_ids else (-1,)
-    
-    chosen = None
-    total_in_topic = 0
 
     with db_conn() as conn:
-        # Build filter chung
         where_clause, params = build_vocab_filters(u, tid)
 
-        # 2. LẤY TỪ ĐÚNG (CHOSEN)
-        # Query này loại trừ những id trong danh sách exclude
-        query_chosen = f"""
-            SELECT v.*, t.name as topic_name 
+        # 1 query: pool = filter, thử lấy random không exclude, nếu không có thì reset
+        # + trả luôn total count của pool qua window function
+        query = f"""
+            WITH pool AS (
+                SELECT v.id FROM vocabulary v {where_clause}
+            ),
+            picked AS (
+                SELECT id FROM pool WHERE id <> ALL(%s::int[])
+                ORDER BY RANDOM() LIMIT 1
+            ),
+            fallback AS (
+                SELECT id FROM pool
+                WHERE NOT EXISTS (SELECT 1 FROM picked)
+                ORDER BY RANDOM() LIMIT 1
+            )
+            SELECT v.*, t.name as topic_name,
+                   (SELECT COUNT(*) FROM pool) as total_in_topic
             FROM vocabulary v
             JOIN topics t ON t.id = v.topic_id
-            {where_clause} AND v.id NOT IN %s
-            ORDER BY RANDOM() LIMIT 1
+            WHERE v.id = COALESCE(
+                (SELECT id FROM picked),
+                (SELECT id FROM fallback)
+            )
         """
-        chosen_row = fetchone(conn, query_chosen, params + [exclude_tuple])
-
-        # Nếu đã làm hết sạch từ (exclude hết rồi) thì Reset: lấy lại ngẫu nhiên không exclude
-        if not chosen_row:
-            query_reset = f"""
-                SELECT v.*, t.name as topic_name 
-                FROM vocabulary v
-                JOIN topics t ON t.id = v.topic_id
-                {where_clause}
-                ORDER BY RANDOM() LIMIT 1
-            """
-            chosen_row = fetchone(conn, query_reset, params)
+        chosen_row = fetchone(conn, query, params + [exclude_ids])
 
         if not chosen_row:
             return jsonify({'error': 'Không có từ vựng'}), 404
-        
-        chosen = dict(chosen_row)
 
-        # 3. LẤY 3 ĐÁP ÁN SAI (KHÔNG TRÙNG NHAU)
-        # Sử dụng DISTINCT để đảm bảo 3 từ sai không bị trùng chữ Hán
-        query_wrong = f"""
-            SELECT hanzi, pinyin, vietnamese 
-            FROM (
-                SELECT DISTINCT ON (hanzi) hanzi, pinyin, vietnamese, priority, random_val
-                FROM (
-                    (
-                        SELECT hanzi, pinyin, vietnamese, 1 as priority, RANDOM() as random_val
-                        FROM vocabulary
-                        WHERE topic_id = %s AND id != %s
-                        LIMIT 20
-                    )
+        chosen = dict(chosen_row)
+        total_in_topic = chosen.pop('total_in_topic', 0)
+
+        # Wrong answers: ưu tiên cùng topic, fallback topic khác. Có filter owner_id.
+        owner_sql = "(owner_id IS NULL OR owner_id = %s)"
+        wrong_query = f"""
+            SELECT hanzi, pinyin, vietnamese FROM (
+                SELECT DISTINCT ON (hanzi) hanzi, pinyin, vietnamese, pri, r FROM (
+                    (SELECT hanzi, pinyin, vietnamese, 1 AS pri, RANDOM() AS r
+                     FROM vocabulary
+                     WHERE topic_id = %s AND id <> %s AND hanzi <> %s AND {owner_sql}
+                     LIMIT 20)
                     UNION ALL
-                    (
-                        SELECT hanzi, pinyin, vietnamese, 2 as priority, RANDOM() as random_val
-                        FROM vocabulary
-                        WHERE id != %s
-                        LIMIT 20
-                    )
-                ) sub_all
-                WHERE hanzi != %s
-                ORDER BY hanzi, priority ASC, random_val
-            ) final_sub
-            ORDER BY priority ASC, random_val
+                    (SELECT hanzi, pinyin, vietnamese, 2 AS pri, RANDOM() AS r
+                     FROM vocabulary
+                     WHERE topic_id <> %s AND hanzi <> %s AND {owner_sql}
+                     LIMIT 20)
+                ) combined
+                ORDER BY hanzi, pri, r
+            ) deduped
+            ORDER BY pri, r
             LIMIT 3
         """
-        # params: topic_id của từ đúng, id của từ đúng, id của từ đúng (global), hanzi của từ đúng
-        wrong_rows = fetchall(conn, query_wrong, (chosen['topic_id'], chosen['id'], chosen['id'], chosen['hanzi']))
-
-        # 4. ĐẾM TỔNG SỐ TỪ TRONG TOPIC (Cố định giá trị này)
-        count_row = fetchone(conn, f"SELECT COUNT(*) as count FROM vocabulary v {where_clause}", params)
-        total_in_topic = count_row['count'] if count_row else 0
+        wrong_rows = fetchall(conn, wrong_query, (
+            chosen['topic_id'], chosen['id'], chosen['hanzi'], u['id'],
+            chosen['topic_id'], chosen['hanzi'], u['id'],
+        ))
 
     # 5. Đóng gói Options
     options = []
@@ -176,60 +166,54 @@ def quiz_vocab():
 def quiz_sentence():
     u = session['user']
     tid = request.args.get('topic_id')
-    
-    # 1. Xử lý danh sách loại trừ (exclude) để không bị lặp lại câu vừa làm
+
     exclude_str = request.args.get('exclude', '').strip()
     exclude_ids = [int(x) for x in exclude_str.split(',') if x.isdigit()]
-    exclude_tuple = tuple(exclude_ids) if exclude_ids else (-1,)
-    
-    chosen = None
-    total_count = 0
 
     with db_conn() as conn:
-        # 2. Xây dựng điều kiện lọc (Filter)
         conds, params = [], []
         if u['role'] == 'admin':
             conds.append("s.owner_id IS NULL")
         else:
             conds.append("(s.owner_id IS NULL OR s.owner_id = %s)")
             params.append(u['id'])
-            
+
         if tid:
             conds.append("s.topic_id = %s")
             params.append(tid)
 
         where_clause = " WHERE " + " AND ".join(conds)
 
-        # 3. Truy vấn lấy 1 câu ngẫu nhiên (Tối ưu: Không load all)
-        # Ưu tiên lấy câu chưa nằm trong danh sách exclude
-        query_chosen = f"""
-            SELECT s.*, t.name as topic_name 
+        # 1 query: pool + picked (exclude) + fallback reset + total count
+        query = f"""
+            WITH pool AS (
+                SELECT s.id FROM sentences s {where_clause}
+            ),
+            picked AS (
+                SELECT id FROM pool WHERE id <> ALL(%s::int[])
+                ORDER BY RANDOM() LIMIT 1
+            ),
+            fallback AS (
+                SELECT id FROM pool
+                WHERE NOT EXISTS (SELECT 1 FROM picked)
+                ORDER BY RANDOM() LIMIT 1
+            )
+            SELECT s.*, t.name as topic_name,
+                   (SELECT COUNT(*) FROM pool) as total_count
             FROM sentences s
             JOIN topics t ON t.id = s.topic_id
-            {where_clause} AND s.id NOT IN %s
-            ORDER BY RANDOM() LIMIT 1
+            WHERE s.id = COALESCE(
+                (SELECT id FROM picked),
+                (SELECT id FROM fallback)
+            )
         """
-        chosen_row = fetchone(conn, query_chosen, params + [exclude_tuple])
-
-        # Nếu đã làm hết (exclude chứa toàn bộ ID), thì Reset lấy lại ngẫu nhiên bất kỳ
-        if not chosen_row:
-            query_reset = f"""
-                SELECT s.*, t.name as topic_name 
-                FROM sentences s
-                JOIN topics t ON t.id = s.topic_id
-                {where_clause}
-                ORDER BY RANDOM() LIMIT 1
-            """
-            chosen_row = fetchone(conn, query_reset, params)
+        chosen_row = fetchone(conn, query, params + [exclude_ids])
 
         if not chosen_row:
             return jsonify({'error': 'Không tìm thấy câu nào'}), 404
-        
-        chosen = dict(chosen_row)
 
-        # 4. Truy vấn lấy tổng số câu (Chỉ đếm, không load data)
-        count_res = fetchone(conn, f"SELECT COUNT(*) as count FROM sentences s {where_clause}", params)
-        total_count = count_res['count'] if count_res else 0
+        chosen = dict(chosen_row)
+        total_count = chosen.pop('total_count', 0)
 
     # 5. Logic đảo từ (Giữ nguyên theo yêu cầu của bạn: đảo từng ký tự)
     chars = list(chosen['hanzi'])
@@ -273,7 +257,6 @@ def leaderboard():
     with db_conn() as conn:
         params = []
 
-        # SỬA: Cú pháp ngày tháng của PostgreSQL
         date_filter = ""
         if period == 'today':
             date_filter = "AND s.recorded_at::date = CURRENT_DATE"
@@ -282,30 +265,29 @@ def leaderboard():
         elif period == 'month':
             date_filter = "AND s.recorded_at >= CURRENT_DATE - INTERVAL '30 days'"
 
-    topic_filter = ""
-    if topic_id:
-        topic_filter = "AND s.topic_id = %s"
-        params.append(topic_id)
-    
-    type_filter = ""
-    if quiz_type != 'all':
-        type_filter = "AND s.quiz_type = %s"
-        params.append(quiz_type)
+        topic_filter = ""
+        if topic_id:
+            topic_filter = "AND s.topic_id = %s"
+            params.append(topic_id)
 
-    # SỬA: Dùng fetchall helper thay vì conn.execute
-    query = f"""
-        SELECT u.username, u.role, MAX(s.streak) as best_streak,
-               COUNT(s.id) as attempts,
-               MAX(s.recorded_at)::date as last_date
-        FROM scores s
-        JOIN users u ON u.id = s.user_id
-        WHERE 1=1 {topic_filter} {type_filter} {date_filter}
-        GROUP BY s.user_id, u.username, u.role
-        ORDER BY best_streak DESC
-        LIMIT 20
-    """
-    rows = fetchall(conn, query, params)
-    return jsonify([dict(r) for r in rows])
+        type_filter = ""
+        if quiz_type != 'all':
+            type_filter = "AND s.quiz_type = %s"
+            params.append(quiz_type)
+
+        query = f"""
+            SELECT u.username, u.role, MAX(s.streak) as best_streak,
+                   COUNT(s.id) as attempts,
+                   MAX(s.recorded_at)::date as last_date
+            FROM scores s
+            JOIN users u ON u.id = s.user_id
+            WHERE 1=1 {topic_filter} {type_filter} {date_filter}
+            GROUP BY s.user_id, u.username, u.role
+            ORDER BY best_streak DESC
+            LIMIT 20
+        """
+        rows = fetchall(conn, query, params)
+        return jsonify([dict(r) for r in rows])
 
 @quiz_bp.route('/api/errors', methods=['POST'])
 @require_login
