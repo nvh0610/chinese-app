@@ -2,6 +2,27 @@
 window.CU = null;
 let sidebarCollapsed = false;
 
+// ── Dark mode ────────────────────────────────────────────────────────────────
+function applyDarkMode(dark) {
+  document.documentElement.classList.toggle('dark', dark);
+  const icons = document.querySelectorAll('#dmIcon, #dmIconM');
+  const labels = document.querySelectorAll('#dmLabel, #dmLabelM');
+  icons.forEach(el => el.textContent = dark ? '☀️' : '🌙');
+  labels.forEach(el => el.textContent = dark ? 'Chế độ sáng' : 'Chế độ tối');
+}
+
+function toggleDarkMode() {
+  const dark = !document.documentElement.classList.contains('dark');
+  applyDarkMode(dark);
+  localStorage.setItem('darkMode', dark ? '1' : '0');
+}
+
+// Khôi phục preference khi load
+(function() {
+  const saved = localStorage.getItem('darkMode');
+  if (saved === '1') applyDarkMode(true);
+})();
+
 document.addEventListener('DOMContentLoaded', async () => {
   const res = await api('/api/me');
   if (res.user) {

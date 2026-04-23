@@ -59,6 +59,9 @@
         <span id="mUserNameMobile">User</span>
       </div>
       <div id="mUserDropdown" class="m-dropdown hidden">
+        <button class="m-dropdown-item" onclick="toggleDarkMode()">
+          <span class="sb-icon" id="dmIconM">🌙</span> <span id="dmLabelM">Chế độ tối</span>
+        </button>
         <button class="m-dropdown-item logout" onclick="doLogout()">
           <span class="sb-icon">↩</span> Đăng xuất
         </button>
@@ -99,6 +102,9 @@
       </nav>
       <div class="sb-footer">
         <div class="sb-user" id="sbUser"></div>
+        <button class="sb-btn" onclick="toggleDarkMode()">
+          <span class="sb-icon" id="dmIcon">🌙</span><span class="sb-label" id="dmLabel">Chế độ tối</span>
+        </button>
         <button class="sb-logout" onclick="doLogout()"><span class="sb-icon">↩</span><span class="sb-label">Đăng
             xuất</span></button>
       </div>
