@@ -760,6 +760,14 @@ body {
   user-select: none;
 }
 
+/* VQ pinyin toggle */
+#page-quiz-vocab.vq-pinyin-off .opt-py,
+#page-quiz-vocab.vq-pinyin-off .vq-pinyin {
+  filter: blur(6px);
+  user-select: none;
+  transition: filter .25s;
+}
+
 .eye-btn {
   background: none;
   border: 1.5px solid rgba(37, 99, 235, .25);

@@ -288,6 +288,15 @@ function setVQMode(mode, btn) {
   resetVQ();
 }
 
+function toggleVQPinyin() {
+  const page = document.getElementById('page-quiz-vocab');
+  const btn = document.getElementById('vqPinyinBtn');
+  page.classList.toggle('vq-pinyin-off');
+  const off = page.classList.contains('vq-pinyin-off');
+  btn.textContent = off ? '🙈 Pinyin' : '👁 Pinyin';
+  btn.classList.toggle('active', !off);
+}
+
 function showResult(mode) {
   const s = { vq: VQ, tq: TQ, sq: SQ }[mode];
   const pct = s.done > 0 ? Math.round(s.right / s.done * 100) : 0;
@@ -371,7 +380,7 @@ function _renderVQCard(q) {
       <div class="qctr" style="margin-bottom:24px">
         <div class="ql">Chữ Hán — chọn nghĩa tiếng Việt đúng</div>
         <div style="font-family:var(--fz);font-size:64px;font-weight:900;color:var(--c-ink);line-height:1;margin-bottom:4px">${q.hanzi}</div>
-        <div style="font-style:italic;color:var(--c-blue);font-size:16px;margin-bottom:6px">${q.pinyin}</div>
+        <div class="vq-pinyin" style="font-style:italic;color:var(--c-blue);font-size:16px;margin-bottom:6px">${q.pinyin}</div>
         <div style="display:flex;justify-content:center;gap:6px;margin-bottom:4px">
           <span class="qtag" style="color:${fg};background:${bg};margin:0">${q.topic_name}</span>
           ${speakBtn(q.hanzi, 18)}
