@@ -304,6 +304,18 @@ def record_error():
         """, (u['id'], d['word_ref'], d['quiz_type']))
     return jsonify({'success': True})
 
+@quiz_bp.route('/api/errors/reset', methods=['POST'])
+@require_login
+def reset_error():
+    u = session['user']
+    d = request.json
+    with db_conn() as conn:
+        execute(conn, """
+            DELETE FROM word_errors
+            WHERE user_id = %s AND word_ref = %s AND quiz_type = %s
+        """, (u['id'], d['word_ref'], d['quiz_type']))
+    return jsonify({'success': True})
+
 @quiz_bp.route('/api/errors/<word_ref>')
 @require_login
 def get_error(word_ref):
