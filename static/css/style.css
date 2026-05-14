@@ -2090,13 +2090,12 @@ body {
 
 .error-badge {
   display: inline-block;
-  background: var(--c-ora-s);
-  color: var(--c-ora);
+  background: #f97316;
+  color: #fff;
   font-size: 11px;
   font-weight: 600;
   padding: 3px 10px;
   border-radius: 20px;
-  border: 1px solid #fed7aa;
 }
 
 /* TTS Gender switcher */
@@ -2208,6 +2207,91 @@ body {
 }
 .qh-prev-btn:hover:not(:disabled) { background: var(--c-bdr); }
 .qh-prev-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Clickable wrong-counter chip */
+.chip-clickable {
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.chip-clickable:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Wrong-answers review list */
+.wrong-list-banner {
+  background: var(--c-red-s);
+  border: 1px solid var(--c-red);
+  color: var(--c-red);
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.wrong-list-banner button {
+  background: var(--c-sur);
+  border: 1px solid var(--c-red);
+  color: var(--c-red);
+  padding: 5px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+}
+.wrong-list-banner button:hover { background: var(--c-red); color: #fff; }
+
+.wrong-list-empty {
+  text-align: center;
+  color: var(--c-ink3);
+  padding: 30px 16px;
+  font-size: 15px;
+}
+
+.wrong-list-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--c-bdr);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  background: var(--c-sur);
+}
+.wrong-list-item:hover { border-color: var(--c-red); }
+.wrong-list-main { flex: 1; min-width: 0; }
+.wrong-list-hanzi {
+  font-family: var(--fz);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--c-ink);
+}
+.wrong-list-pinyin { color: var(--c-blue); font-style: italic; font-size: 13px; }
+.wrong-list-viet { color: var(--c-ink2); font-size: 14px; margin-top: 2px; }
+.wrong-list-badge {
+  background: var(--c-red);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.wrong-list-retry-btn {
+  background: var(--c-gold);
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.wrong-list-retry-btn:hover { background: #a16207; }
 
 /* History view banner */
 .qh-banner {

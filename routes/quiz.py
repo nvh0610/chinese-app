@@ -58,46 +58,55 @@ quiz_bp = Blueprint('quiz', __name__)
 def quiz_vocab():
     u = session['user']
     tid = request.args.get('topic_id')
+    qt = request.args.get('quiz_type', 'vocab')
     exclude_str = request.args.get('exclude', '').strip()
 
     exclude_ids = [int(x) for x in exclude_str.split(',') if x.isdigit()]
 
     with db_conn() as conn:
-        where_clause, params = build_vocab_filters(u, tid)
+        where_clause, where_params = build_vocab_filters(u, tid)
 
-        # 1 query: pool = filter, thử lấy random không exclude, nếu không có thì reset
-        # + trả luôn total count của pool qua window function
         query = f"""
             WITH pool AS (
-                SELECT v.id FROM vocabulary v {where_clause}
+                SELECT v.id, COALESCE(we.error_count, 0) AS ec
+                FROM vocabulary v
+                LEFT JOIN word_errors we
+                    ON we.word_ref = v.hanzi
+                    AND we.user_id = %s
+                    AND we.quiz_type = %s
+                {where_clause}
             ),
             picked AS (
-                SELECT id FROM pool WHERE id <> ALL(%s::int[])
-                ORDER BY RANDOM() LIMIT 1
+                SELECT id, ec FROM pool WHERE id <> ALL(%s::int[])
+                ORDER BY (ec * 4 + 1) * RANDOM() DESC LIMIT 1
             ),
             fallback AS (
-                SELECT id FROM pool
+                SELECT id, ec FROM pool
                 WHERE NOT EXISTS (SELECT 1 FROM picked)
-                ORDER BY RANDOM() LIMIT 1
+                ORDER BY (ec * 4 + 1) * RANDOM() DESC LIMIT 1
+            ),
+            chosen AS (
+                SELECT id, ec FROM picked
+                UNION ALL
+                SELECT id, ec FROM fallback
+                LIMIT 1
             )
             SELECT v.*, t.name as topic_name,
-                   (SELECT COUNT(*) FROM pool) as total_in_topic
+                   (SELECT COUNT(*) FROM pool) as total_in_topic,
+                   (SELECT ec FROM chosen) as error_count
             FROM vocabulary v
             JOIN topics t ON t.id = v.topic_id
-            WHERE v.id = COALESCE(
-                (SELECT id FROM picked),
-                (SELECT id FROM fallback)
-            )
+            WHERE v.id = (SELECT id FROM chosen)
         """
-        chosen_row = fetchone(conn, query, params + [exclude_ids])
+        chosen_row = fetchone(conn, query, [u['id'], qt] + where_params + [exclude_ids])
 
         if not chosen_row:
             return jsonify({'error': 'Không có từ vựng'}), 404
 
         chosen = dict(chosen_row)
         total_in_topic = chosen.pop('total_in_topic', 0)
+        error_count = chosen.pop('error_count', 0) or 0
 
-        # Wrong answers: ưu tiên cùng topic, fallback topic khác. Có filter owner_id.
         owner_sql = "(owner_id IS NULL OR owner_id = %s)"
         wrong_query = f"""
             SELECT hanzi, pinyin, vietnamese FROM (
@@ -122,28 +131,13 @@ def quiz_vocab():
             chosen['topic_id'], chosen['hanzi'], u['id'],
         ))
 
-    # 5. Đóng gói Options
-    options = []
-    # Đáp án đúng
-    options.append({
-        'hanzi': chosen['hanzi'],
-        'pinyin': chosen['pinyin'],
-        'vietnamese': chosen['vietnamese'],
-        'correct': True
-    })
-    # Đáp án sai
+    options = [{'hanzi': chosen['hanzi'], 'pinyin': chosen['pinyin'],
+                'vietnamese': chosen['vietnamese'], 'correct': True}]
     for w in wrong_rows:
-        options.append({
-            'hanzi': w['hanzi'],
-            'pinyin': w['pinyin'],
-            'vietnamese': w['vietnamese'],
-            'correct': False
-        })
-    
-    # Trộn ngẫu nhiên vị trí các câu trả lời
+        options.append({'hanzi': w['hanzi'], 'pinyin': w['pinyin'],
+                        'vietnamese': w['vietnamese'], 'correct': False})
     random.shuffle(options)
 
-    # 6. Response (Đã fix tên biến total)
     return jsonify({
         "id": chosen['id'],
         "hanzi": chosen['hanzi'],
@@ -157,7 +151,8 @@ def quiz_vocab():
         "owner_id": chosen['owner_id'],
         "scope": "public" if chosen['owner_id'] is None else "private",
         "created_at": chosen['created_at'].strftime("%a, %d %b %Y %H:%M:%S GMT") if chosen['created_at'] else None,
-        "total": total_in_topic, # Dùng đúng tên biến đã lấy từ DB
+        "total": total_in_topic,
+        "error_count": error_count,
         "options": options
     })
 
@@ -171,55 +166,63 @@ def quiz_sentence():
     exclude_ids = [int(x) for x in exclude_str.split(',') if x.isdigit()]
 
     with db_conn() as conn:
-        conds, params = [], []
+        conds, where_params = [], []
         if u['role'] == 'admin':
             conds.append("s.owner_id IS NULL")
         else:
             conds.append("(s.owner_id IS NULL OR s.owner_id = %s)")
-            params.append(u['id'])
+            where_params.append(u['id'])
 
         if tid:
             conds.append("s.topic_id = %s")
-            params.append(tid)
+            where_params.append(tid)
 
         where_clause = " WHERE " + " AND ".join(conds)
 
-        # 1 query: pool + picked (exclude) + fallback reset + total count
         query = f"""
             WITH pool AS (
-                SELECT s.id FROM sentences s {where_clause}
+                SELECT s.id, COALESCE(we.error_count, 0) AS ec
+                FROM sentences s
+                LEFT JOIN word_errors we
+                    ON we.word_ref = s.hanzi
+                    AND we.user_id = %s
+                    AND we.quiz_type = 'sent'
+                {where_clause}
             ),
             picked AS (
-                SELECT id FROM pool WHERE id <> ALL(%s::int[])
-                ORDER BY RANDOM() LIMIT 1
+                SELECT id, ec FROM pool WHERE id <> ALL(%s::int[])
+                ORDER BY (ec * 4 + 1) * RANDOM() DESC LIMIT 1
             ),
             fallback AS (
-                SELECT id FROM pool
+                SELECT id, ec FROM pool
                 WHERE NOT EXISTS (SELECT 1 FROM picked)
-                ORDER BY RANDOM() LIMIT 1
+                ORDER BY (ec * 4 + 1) * RANDOM() DESC LIMIT 1
+            ),
+            chosen AS (
+                SELECT id, ec FROM picked
+                UNION ALL
+                SELECT id, ec FROM fallback
+                LIMIT 1
             )
             SELECT s.*, t.name as topic_name,
-                   (SELECT COUNT(*) FROM pool) as total_count
+                   (SELECT COUNT(*) FROM pool) as total_count,
+                   (SELECT ec FROM chosen) as error_count
             FROM sentences s
             JOIN topics t ON t.id = s.topic_id
-            WHERE s.id = COALESCE(
-                (SELECT id FROM picked),
-                (SELECT id FROM fallback)
-            )
+            WHERE s.id = (SELECT id FROM chosen)
         """
-        chosen_row = fetchone(conn, query, params + [exclude_ids])
+        chosen_row = fetchone(conn, query, [u['id']] + where_params + [exclude_ids])
 
         if not chosen_row:
             return jsonify({'error': 'Không tìm thấy câu nào'}), 404
 
         chosen = dict(chosen_row)
         total_count = chosen.pop('total_count', 0)
+        error_count = chosen.pop('error_count', 0) or 0
 
-    # 5. Logic đảo từ (Giữ nguyên theo yêu cầu của bạn: đảo từng ký tự)
     chars = list(chosen['hanzi'])
     random.shuffle(chars)
 
-    # 6. Trả về kết quả (Format chuẩn theo JSON bạn gửi)
     return jsonify({
         "id": chosen['id'],
         "hanzi": chosen['hanzi'],
@@ -230,7 +233,8 @@ def quiz_sentence():
         "scope": "public" if chosen['owner_id'] is None else "private",
         "created_at": chosen['created_at'].strftime("%a, %d %b %Y %H:%M:%S GMT") if chosen['created_at'] else None,
         "shuffled": chars,
-        "total": total_count
+        "total": total_count,
+        "error_count": error_count
     })
 
 @quiz_bp.route('/api/scores', methods=['POST'])

@@ -6,7 +6,8 @@
       "Bash(ls \"\\\\\\\\wsl.localhost\\\\Ubuntu-22.04\\\\root\\\\my-project\\\\chinese-app\\\\static\\\\css\\\\\")",
       "Bash(node --check \"//wsl.localhost/Ubuntu-22.04/root/my-project/chinese-app/static/js/quiz.js\")",
       "Bash(node --check \"//wsl.localhost/Ubuntu-22.04/root/my-project/chinese-app/static/js/main.js\")",
-      "Bash(xargs wc *)"
+      "Bash(xargs wc *)",
+      "Bash(grep -E \"\\\\.\\(py|js\\)$\")"
     ]
   }
 }

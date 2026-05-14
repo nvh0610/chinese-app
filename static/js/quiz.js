@@ -12,6 +12,9 @@ const QuizHistory = {
   cursor: null,             // null = đang ở live; idx = đang xem câu quá khứ
   currentIsLatest: false,   // true = live state = reveal của items[N-1]; false = câu mới chưa trả lời
   snapshot: null,           // lưu HTML + current-q globals khi vào history view
+  redeemed: new Set(),      // questionIds đã retry đúng từ wrong list ("type:qid")
+  wrongListSnapshot: null,  // lưu state khi vào wrong-list view
+  retryCtx: null,           // { type, questionId } khi đang retry từ wrong list
 
   resetType(newType) {
     if (this.activeType === newType) return;
@@ -24,6 +27,26 @@ const QuizHistory = {
     this.cursor = null;
     this.currentIsLatest = false;
     this.snapshot = null;
+    this.redeemed = new Set();
+    this.wrongListSnapshot = null;
+    this.retryCtx = null;
+  },
+
+  // Lấy danh sách câu sai trong session, gộp theo questionId
+  getWrongList() {
+    const map = new Map();
+    this.items.forEach(it => {
+      if (it.quizType !== this.activeType) return;
+      if (it.result !== 'wrong') return;
+      const key = `${it.quizType}:${it.questionId}`;
+      if (this.redeemed.has(key)) return;
+      if (!map.has(key)) {
+        map.set(key, { item: it, count: 1, key });
+      } else {
+        map.get(key).count++;
+      }
+    });
+    return Array.from(map.values());
   },
 
   push(item) {
@@ -339,7 +362,7 @@ async function loadVQ() {
   QuizHistory.currentIsLatest = false;
   QuizHistory.cursor = null;
   const tid = document.getElementById('vqTopic').value;
-  const params = new URLSearchParams({ exclude: VQ.exclude.join(',') });
+  const params = new URLSearchParams({ exclude: VQ.exclude.join(','), quiz_type: 'vocab' });
   if (tid) params.set('topic_id', tid);
   const q = await api('/api/quiz/vocab?' + params);
   if (q.error) { card.innerHTML = emptyHtml('Không có từ vựng nào.'); return; }
@@ -360,7 +383,7 @@ function _renderVQCard(q) {
         <div style="margin-top:6px">
           <span class="qtag" style="color:${fg};background:${bg};margin:0">${q.topic_name}</span>
         </div>
-        <div id="vqErrBadge" style="min-height:20px;margin-top:4px"></div>
+        ${q.error_count > 0 ? `<div style="margin-top:6px"><span class="error-badge">🔥 Từ hay sai (${q.error_count} lần)</span></div>` : ''}
       </div>
       <div class="opts" id="vqOpts">
         ${q.options.map(o => `
@@ -385,7 +408,7 @@ function _renderVQCard(q) {
           <span class="qtag" style="color:${fg};background:${bg};margin:0">${q.topic_name}</span>
           ${speakBtn(q.hanzi, 18)}
         </div>
-        <div id="vqErrBadge" style="min-height:20px;margin-top:4px"></div>
+        ${q.error_count > 0 ? `<div style="margin-top:6px"><span class="error-badge">🔥 Từ hay sai (${q.error_count} lần)</span></div>` : ''}
       </div>
       <div class="opts" id="vqOpts">
         ${q.options.map(o => `
@@ -401,7 +424,6 @@ function _renderVQCard(q) {
     `;
   }
 
-  loadErrorBadge(q.hanzi, 'vqErrBadge');
   document.getElementById('vqNextBtn').onclick = () => nextVQ(q.id);
 }
 function checkVQ(btn, correct, hanzi, pinyin, ex, expy, exvn) {
@@ -419,19 +441,31 @@ function checkVQ(btn, correct, hanzi, pinyin, ex, expy, exvn) {
 
   if (correct) btn.classList.add('correct'); else btn.classList.add('wrong');
 
-  if (correct) {
-    VQ.right++; VQ.streak++; VQ.maxStreak = Math.max(VQ.maxStreak, VQ.streak);
-    _saveStreakIfBetter('vq');
-  } else {
-    VQ.wrong++; VQ.streak = 0;
-    if (vqCurrentQ) recordError(vqCurrentQ.hanzi, 'vocab');
+  const isRetry = QuizHistory.retryCtx && QuizHistory.retryCtx.type === 'vq';
+
+  if (!isRetry) {
+    if (correct) {
+      VQ.right++; VQ.streak++; VQ.maxStreak = Math.max(VQ.maxStreak, VQ.streak);
+      _saveStreakIfBetter('vq');
+      if (vqCurrentQ) resetError(vqCurrentQ.hanzi, 'vocab');
+    } else {
+      VQ.wrong++; VQ.streak = 0;
+      if (vqCurrentQ) recordError(vqCurrentQ.hanzi, 'vocab');
+    }
+    VQ.done++;
+    updateScoreUI('vq');
   }
-  VQ.done++;
-  updateScoreUI('vq');
 
   document.getElementById('vqReveal').innerHTML = `<div class="reveal ${correct ? 'ok-rv' : 'bad-rv'}">${revealHtml(correct, hanzi, pinyin, ex, expy, exvn)}</div>`;
-  document.getElementById('vqNav').style.display = VQ.done >= VQ.total ? 'none' : 'flex';
+  document.getElementById('vqNav').style.display = 'none';
   VQ.answered = true;
+
+  if (isRetry) {
+    _afterRetrySubmit('vq', correct);
+    return;
+  }
+
+  document.getElementById('vqNav').style.display = VQ.done >= VQ.total ? 'none' : 'flex';
 
   if (vqCurrentQ) {
     const correctIdx = vqCurrentQ.options.findIndex(o => o.correct);
@@ -489,7 +523,7 @@ async function loadTQ() {
   QuizHistory.currentIsLatest = false;
   QuizHistory.cursor = null;
   const tid = document.getElementById('tqTopic').value;
-  const params = new URLSearchParams({ exclude: TQ.exclude.join(',') });
+  const params = new URLSearchParams({ exclude: TQ.exclude.join(','), quiz_type: 'type' });
   if (tid) params.set('topic_id', tid);
   const q = await api('/api/quiz/vocab?' + params);
   if (q.error) { card.innerHTML = emptyHtml('Không có từ vựng nào.'); return; }
@@ -508,6 +542,7 @@ function _renderTQCard(q) {
         <div class="ql">Nhập chữ Hán cho nghĩa sau</div>
         <div class="qviet">${q.vietnamese}</div>
         <span class="qtag" style="color:${fg};background:${bg}">${q.topic_name}</span>
+        ${q.error_count > 0 ? `<div style="margin-top:6px"><span class="error-badge">🔥 Từ hay sai (${q.error_count} lần)</span></div>` : ''}
       ` : `
         <div class="ql">Nghe rồi gõ chữ Hán</div>
         <div style="display:flex;justify-content:center;gap:10px;margin:14px 0">
@@ -517,6 +552,7 @@ function _renderTQCard(q) {
             style="font-size:32px;width:64px;height:64px;border:2px solid var(--c-blue-s);border-radius:var(--r);background:var(--c-blue-s)">🔉</button>
         </div>
         <span class="qtag" style="color:${fg};background:${bg}">${q.topic_name}</span>
+        ${q.error_count > 0 ? `<div style="margin-top:6px"><span class="error-badge">🔥 Từ hay sai (${q.error_count} lần)</span></div>` : ''}
         <div style="font-size:12px;color:var(--c-ink3);margin-top:6px">Nhấn loa để nghe, sau đó gõ chữ Hán</div>
       `}
     </div>
@@ -564,17 +600,22 @@ function checkTQ(answer, pinyin, ex, expy, exvn, qId) {
   document.getElementById('tqCheckBtn').disabled = true;
   document.getElementById('tqHintBtn').disabled = true;
 
-  if (ok) {
-    TQ.right++; TQ.streak++; TQ.maxStreak = Math.max(TQ.maxStreak, TQ.streak);
-    _saveStreakIfBetter('tq');
-  } else {
-    TQ.wrong++; TQ.streak = 0;
-    if (tqCurrentQ) recordError(tqCurrentQ.hanzi, 'type');
-  }
-  TQ.done++;
-  updateScoreUI('tq');
+  const isRetry = QuizHistory.retryCtx && QuizHistory.retryCtx.type === 'tq';
 
-  const showNext = TQ.done < TQ.total;
+  if (!isRetry) {
+    if (ok) {
+      TQ.right++; TQ.streak++; TQ.maxStreak = Math.max(TQ.maxStreak, TQ.streak);
+      _saveStreakIfBetter('tq');
+      if (tqCurrentQ) resetError(tqCurrentQ.hanzi, 'type');
+    } else {
+      TQ.wrong++; TQ.streak = 0;
+      if (tqCurrentQ) recordError(tqCurrentQ.hanzi, 'type');
+    }
+    TQ.done++;
+    updateScoreUI('tq');
+  }
+
+  const showNext = !isRetry && TQ.done < TQ.total;
   document.getElementById('tqReveal').innerHTML = `
     <div class="reveal ${ok ? 'ok-rv' : 'bad-rv'}" style="margin-top:14px">
       ${revealHtml(ok, answer, pinyin, ex, expy, exvn, !ok)}
@@ -584,6 +625,11 @@ function checkTQ(answer, pinyin, ex, expy, exvn, qId) {
   if (showNext) document.getElementById('tqNextBtn').onclick = () => nextTQ(qId);
 
   TQ.answered = true;
+
+  if (isRetry) {
+    _afterRetrySubmit('tq', ok);
+    return;
+  }
 
   if (tqCurrentQ) {
     QuizHistory.push({
@@ -642,6 +688,7 @@ async function loadSQ() {
   card.innerHTML = `
     <div class="qctr" style="margin-bottom:18px">
       <div class="sq-viet">${q.vietnamese}</div>
+      ${q.error_count > 0 ? `<div style="margin-top:6px"><span class="error-badge">🔥 Từ hay sai (${q.error_count} lần)</span></div>` : ''}
       <div class="py-toggle" style="display:inline-flex;margin-top:8px">
         <span style="font-size:13px;color:var(--c-blue);font-weight:600">Pinyin:</span>
         <span class="py-val hidden-py" id="sqPyVal">${q.pinyin || 'Không có pinyin'}</span>
@@ -765,17 +812,22 @@ function checkSQType() {
 
 // ── Shared finish ─────────────────────────────────────────────────────────────
 function _finishSQ(ok, userAns) {
-  if (ok) {
-    SQ.right++; SQ.streak++; SQ.maxStreak = Math.max(SQ.maxStreak, SQ.streak);
-    _saveStreakIfBetter('sq');
-  } else {
-    SQ.wrong++; SQ.streak = 0;
-    if (sqCurrentQ) recordError(sqCurrentQ.hanzi, 'sent');
-  }
-  SQ.done++;
-  updateScoreUI('sq');
+  const isRetry = QuizHistory.retryCtx && QuizHistory.retryCtx.type === 'sq';
 
-  const showNext = SQ.done < SQ.total;
+  if (!isRetry) {
+    if (ok) {
+      SQ.right++; SQ.streak++; SQ.maxStreak = Math.max(SQ.maxStreak, SQ.streak);
+      _saveStreakIfBetter('sq');
+      if (sqCurrentQ) resetError(sqCurrentQ.hanzi, 'sent');
+    } else {
+      SQ.wrong++; SQ.streak = 0;
+      if (sqCurrentQ) recordError(sqCurrentQ.hanzi, 'sent');
+    }
+    SQ.done++;
+    updateScoreUI('sq');
+  }
+
+  const showNext = !isRetry && SQ.done < SQ.total;
   document.getElementById('sqReveal').innerHTML = `
     <div class="reveal ${ok ? 'ok-rv' : 'bad-rv'}" style="margin-top:14px">
       <div class="rv-label ${ok ? 'ok' : 'bad'}">${ok ? '✓ Đúng rồi!' : '✗ Chưa đúng!'}</div>
@@ -784,6 +836,11 @@ function _finishSQ(ok, userAns) {
     </div>
   `;
   if (showNext) document.getElementById('sqNextBtn').onclick = () => loadSQ();
+
+  if (isRetry) {
+    _afterRetrySubmit('sq', ok);
+    return;
+  }
 
   if (sqCurrentQ) {
     QuizHistory.push({
@@ -829,6 +886,10 @@ function recordError(wordRef, quizType) {
   api('/api/errors', 'POST', { word_ref: wordRef, quiz_type: quizType });
 }
 
+function resetError(wordRef, quizType) {
+  api('/api/errors/reset', 'POST', { word_ref: wordRef, quiz_type: quizType });
+}
+
 // Lấy và hiển thị số lần sai vào element có id errorBadge
 async function loadErrorBadge(wordRef, badgeId) {
   const data = await api(`/api/errors/${encodeURIComponent(wordRef)}`);
@@ -837,5 +898,214 @@ async function loadErrorBadge(wordRef, badgeId) {
   if (data.total > 0) {
     el.innerHTML = `<span class="error-badge">⚠ Đã sai ${data.total} lần</span>`;
   }
+}
+
+// ══ Wrong-Answers Review List ══════════════════════════════════════════════
+function showWrongList(mode) {
+  // Đảm bảo activeType khớp (user có thể click X chip ở mode khác mode đang load)
+  if (QuizHistory.activeType !== mode) return;
+
+  const cardIdMap = { vq: 'vqCard', tq: 'tqCard', sq: 'sqCard' };
+  const card = document.getElementById(cardIdMap[mode]);
+  if (!card) return;
+
+  // Snapshot live state để khôi phục khi quay lại
+  if (!QuizHistory.wrongListSnapshot) {
+    QuizHistory.wrongListSnapshot = {
+      quizType: mode,
+      cardHtml: card.innerHTML,
+      vqCurrentQ: mode === 'vq' ? vqCurrentQ : null,
+      tqCurrentQ: mode === 'tq' ? tqCurrentQ : null,
+      sqCurrentQ: mode === 'sq' ? sqCurrentQ : null,
+      sqCorrect: mode === 'sq' ? SQ.correct : null,
+      sqAnswer: mode === 'sq' ? [...(SQ.answer || [])] : null,
+      vqAnswered: VQ.answered,
+      tqAnswered: TQ.answered,
+      sqAnswered: SQ.answered,
+    };
+  }
+  _renderWrongList(mode);
+}
+
+function _renderWrongList(mode) {
+  const cardIdMap = { vq: 'vqCard', tq: 'tqCard', sq: 'sqCard' };
+  const card = document.getElementById(cardIdMap[mode]);
+  if (!card) return;
+
+  const list = QuizHistory.getWrongList();
+  const banner = `
+    <div class="wrong-list-banner">
+      <span>📋 Câu sai trong session này (${list.length} câu chưa làm lại đúng)</span>
+      <button onclick="exitWrongList()">← Quay lại quiz</button>
+    </div>
+  `;
+
+  let body = '';
+  if (list.length === 0) {
+    body = `<div class="wrong-list-empty">🎉 Không có câu sai nào để ôn — bạn làm rất tốt!</div>`;
+  } else {
+    body = list.map((entry, idx) => {
+      const it = entry.item;
+      const p = it.payload || {};
+      let hanzi = '', pinyin = '', viet = '';
+      if (mode === 'vq' || mode === 'tq') {
+        hanzi = p.hanzi || '';
+        pinyin = p.pinyin || '';
+        viet = p.vietnamese || '';
+      } else if (mode === 'sq') {
+        hanzi = p.hanziOriginal || '';
+        pinyin = p.pinyin || '';
+        viet = p.vietnamese || '';
+      }
+      const badge = entry.count > 1 ? `<span class="wrong-list-badge">Đã sai ${entry.count} lần</span>` : '';
+      return `
+        <div class="wrong-list-item">
+          <div class="wrong-list-main">
+            <div class="wrong-list-hanzi">${_esc(hanzi)}</div>
+            <div class="wrong-list-pinyin">${_esc(pinyin)}</div>
+            <div class="wrong-list-viet">${_esc(viet)}</div>
+          </div>
+          ${badge}
+          <button class="wrong-list-retry-btn" onclick="retryWrongItem('${entry.key}')">🔄 Làm lại</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  card.innerHTML = banner + body;
+}
+
+function exitWrongList() {
+  const snap = QuizHistory.wrongListSnapshot;
+  if (!snap) return;
+  const cardIdMap = { vq: 'vqCard', tq: 'tqCard', sq: 'sqCard' };
+  const card = document.getElementById(cardIdMap[snap.quizType]);
+  if (!card) return;
+  card.innerHTML = snap.cardHtml;
+
+  if (snap.quizType === 'vq') {
+    vqCurrentQ = snap.vqCurrentQ;
+    VQ.answered = snap.vqAnswered;
+    const nextBtn = document.getElementById('vqNextBtn');
+    if (nextBtn && vqCurrentQ) nextBtn.onclick = () => nextVQ(vqCurrentQ.id);
+    const prevBtn = document.querySelector('#vqNav .qh-prev-btn');
+    if (prevBtn) prevBtn.onclick = () => QuizHistory.goBack();
+  } else if (snap.quizType === 'tq') {
+    tqCurrentQ = snap.tqCurrentQ;
+    TQ.answered = snap.tqAnswered;
+    const nextBtn = document.getElementById('tqNextBtn');
+    if (nextBtn && tqCurrentQ) nextBtn.onclick = () => nextTQ(tqCurrentQ.id);
+    const prevBtn = document.querySelector('#tqNav .qh-prev-btn');
+    if (prevBtn) prevBtn.onclick = () => QuizHistory.goBack();
+  } else if (snap.quizType === 'sq') {
+    sqCurrentQ = snap.sqCurrentQ;
+    SQ.correct = snap.sqCorrect;
+    SQ.answer = snap.sqAnswer || [];
+    SQ.answered = snap.sqAnswered;
+    const nextBtn = document.getElementById('sqNextBtn');
+    if (nextBtn) nextBtn.onclick = () => loadSQ();
+    const prevBtn = document.querySelector('#sqNav .qh-prev-btn');
+    if (prevBtn) prevBtn.onclick = () => QuizHistory.goBack();
+  }
+  QuizHistory.wrongListSnapshot = null;
+}
+
+function retryWrongItem(key) {
+  // Tìm entry trong wrong list
+  const list = QuizHistory.getWrongList();
+  const entry = list.find(e => e.key === key);
+  if (!entry) return;
+  const it = entry.item;
+  const p = it.payload || {};
+
+  QuizHistory.retryCtx = { type: it.quizType, questionId: it.questionId, key };
+
+  if (it.quizType === 'vq') {
+    vqCurrentQ = {
+      id: it.questionId,
+      hanzi: p.hanzi, pinyin: p.pinyin, vietnamese: p.vietnamese,
+      example_sentence: p.exampleSentence,
+      example_pinyin: p.examplePinyin,
+      example_vietnamese: p.exampleVietnamese,
+      topic_id: it.topicId, topic_name: it.topicName,
+      options: p.options || [],
+      total: VQ.total,
+    };
+    VQ.answered = false;
+    if (p.mode) vqMode = p.mode;
+    _renderVQCard(vqCurrentQ);
+  } else if (it.quizType === 'tq') {
+    tqCurrentQ = {
+      id: it.questionId,
+      hanzi: p.hanzi, pinyin: p.pinyin, vietnamese: p.vietnamese,
+      example_sentence: p.exampleSentence,
+      example_pinyin: p.examplePinyin,
+      example_vietnamese: p.exampleVietnamese,
+      topic_id: it.topicId, topic_name: it.topicName,
+    };
+    TQ.answered = false;
+    if (p.mode) tqMode = p.mode;
+    _renderTQCard(tqCurrentQ);
+  } else if (it.quizType === 'sq') {
+    const correctOrder = (p.correctOrder || (p.hanziOriginal || '').split(''));
+    const shuffled = [...correctOrder].sort(() => Math.random() - 0.5);
+    sqCurrentQ = {
+      id: it.questionId,
+      hanzi: p.hanziOriginal,
+      pinyin: p.pinyin,
+      vietnamese: p.vietnamese,
+      topic_id: it.topicId, topic_name: it.topicName,
+      shuffled,
+      total: SQ.total,
+    };
+    SQ.correct = p.hanziOriginal;
+    SQ.answer = [];
+    SQ.answered = false;
+    if (p.mode) sqMode = p.mode;
+
+    const card = document.getElementById('sqCard');
+    card.innerHTML = `
+      <div class="qctr" style="margin-bottom:18px">
+        <div class="sq-viet">${_esc(sqCurrentQ.vietnamese || '')}</div>
+        <div class="py-toggle" style="display:inline-flex;margin-top:8px">
+          <span style="font-size:13px;color:var(--c-blue);font-weight:600">Pinyin:</span>
+          <span class="py-val hidden-py" id="sqPyVal">${_esc(sqCurrentQ.pinyin || 'Không có pinyin')}</span>
+          <button class="eye-btn" id="sqEye" onclick="toggleSQPinyin()">👁</button>
+        </div>
+      </div>
+      <div id="sqModeArea"></div>
+      <div id="sqReveal"></div>
+    `;
+    renderSQMode();
+  }
+}
+
+// Sau khi user submit retry, gọi hàm này từ checkXX để xử lý kết quả
+function _afterRetrySubmit(mode, ok) {
+  const ctx = QuizHistory.retryCtx;
+  if (!ctx) return false;
+  if (ok) QuizHistory.redeemed.add(ctx.key);
+  QuizHistory.retryCtx = null;
+  // Hiển thị banner kết quả + nút quay lại danh sách câu sai
+  const cardIdMap = { vq: 'vqCard', tq: 'tqCard', sq: 'sqCard' };
+  const card = document.getElementById(cardIdMap[mode]);
+  if (!card) return true;
+  const retryKey = ctx.key;
+  setTimeout(() => {
+    const banner = document.createElement('div');
+    banner.className = 'wrong-list-banner';
+    banner.style.marginTop = '14px';
+    const retryBtn = ok ? '' : `<button onclick="retryWrongItem('${retryKey}')">🔄 Làm lại ngay</button>`;
+    banner.innerHTML = `
+      <span>${ok ? '🎉 Làm đúng rồi! Câu này đã được gỡ khỏi danh sách câu sai.' : '❌ Vẫn chưa đúng — thử lại lần nữa nhé.'}</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:6px">
+        ${retryBtn}
+        <button onclick="_renderWrongList('${mode}')">← Danh sách câu sai</button>
+        <button onclick="exitWrongList()">↩ Quay lại quiz</button>
+      </div>
+    `;
+    card.appendChild(banner);
+  }, 100);
+  return true;
 }
 
